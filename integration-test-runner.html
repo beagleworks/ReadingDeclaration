@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>統合テスト & ブラウザ互換性テスト</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+            line-height: 1.6;
+        }
+        
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #007bff;
+            padding-bottom: 10px;
+        }
+        
+        h2 {
+            color: #555;
+            border-left: 4px solid #007bff;
+            padding-left: 15px;
+            margin-top: 30px;
+        }
+        
+        .test-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background-color 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        button:hover:not(:disabled) {
+            background: #0056b3;
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        button.success {
+            background: #28a745;
+        }
+        
+        button.success:hover:not(:disabled) {
+            background: #1e7e34;
+        }
+        
+        button.danger {
+            background: #dc3545;
+        }
+        
+        button.danger:hover:not(:disabled) {
+            background: #c82333;
+        }
+        
+        .status {
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            text-align: center;
+            font-weight: bold;
+            border: 2px solid;
+        }
+        
+        .status.ready {
+            background: #d4edda;
+            color: #155724;
+            border-color: #c3e6cb;
+        }
+        
+        .status.running {
+            background: #fff3cd;
+            color: #856404;
+            border-color: #ffeaa7;
+        }
+        
+        .status.completed {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-color: #bee5eb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border-color: #f5c6cb;
+        }
+        
+        .test-output {
+            background: #1e1e1e;
+            color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.4;
+            white-space: pre-wrap;
+            max-height: 500px;
+            overflow-y: auto;
+            margin-top: 20px;
+            border: 1px solid #333;
+        }
+        
+        .test-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .summary-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            border: 1px solid #dee2e6;
+        }
+        
+        .summary-card h3 {
+            margin: 0 0 10px 0;
+            color: #495057;
+            font-size: 14px;
+        }
+        
+        .summary-card .value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        
+        .summary-card.success .value {
+            color: #28a745;
+        }
+        
+        .summary-card.danger .value {
+            color: #dc3545;
+        }
+        
+        .browser-info {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            font-size: 14px;
+        }
+        
+        .browser-info h3 {
+            margin: 0 0 10px 0;
+            color: #495057;
+        }
+        
+        .browser-info ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background-color: #007bff;
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+        
+        .progress-fill.success {
+            background-color: #28a745;
+        }
+        
+        .progress-fill.danger {
+            background-color: #dc3545;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+            
+            .test-controls {
+                grid-template-columns: 1fr;
+            }
+            
+            .test-summary {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 統合テスト & ブラウザ互換性テスト</h1>
+        
+        <!-- ブラウザ情報 -->
+        <div class="browser-info">
+            <h3>🌐 ブラウザ環境情報</h3>
+            <ul id="browser-info-list">
+                <li>読み込み中...</li>
+            </ul>
+        </div>
+        
+        <!-- テストコントロール -->
+        <div class="test-controls">
+            <button id="runIntegrationBtn" onclick="runIntegrationTests()">
+                🔄 統合テスト実行
+            </button>
+            <button id="runCompatibilityBtn" onclick="runCompatibilityTests()">
+                🌐 ブラウザ互換性テスト実行
+            </button>
+            <button id="runAllBtn" onclick="runAllTests()" class="success">
+                🚀 全テスト実行
+            </button>
+            <button id="clearOutputBtn" onclick="clearOutput()" class="danger">
+                🗑️ 出力クリア
+            </button>
+        </div>
+
+        <!-- テスト状態 -->
+        <div id="status" class="status ready">
+            テスト実行準備完了。実行するテストを選択してください。
+        </div>
+
+        <!-- プログレスバー -->
+        <div id="progress-container" style="display: none;">
+            <div class="progress-bar">
+                <div id="progress-fill" class="progress-fill" style="width: 0%;"></div>
+            </div>
+            <div id="progress-text" style="text-align: center; margin-top: 5px; font-size: 14px;"></div>
+        </div>
+
+        <!-- テスト結果サマリー -->
+        <div id="test-summary" class="test-summary" style="display: none;">
+            <div class="summary-card">
+                <h3>総テスト数</h3>
+                <div class="value" id="total-tests">0</div>
+            </div>
+            <div class="summary-card success">
+                <h3>成功</h3>
+                <div class="value" id="passed-tests">0</div>
+            </div>
+            <div class="summary-card danger">
+                <h3>失敗</h3>
+                <div class="value" id="failed-tests">0</div>
+            </div>
+            <div class="summary-card danger">
+                <h3>エラー</h3>
+                <div class="value" id="error-tests">0</div>
+            </div>
+            <div class="summary-card">
+                <h3>成功率</h3>
+                <div class="value" id="success-rate">0%</div>
+            </div>
+        </div>
+
+        <!-- テスト出力 -->
+        <h2>📋 テスト出力</h2>
+        <div id="testOutput" class="test-output">テスト出力がここに表示されます...</div>
+    </div>
+
+    <!-- 必要なJavaScriptファイルを読み込み -->
+    <script src="js/task-model.js"></script>
+    <script src="js/storage-manager.js"></script>
+    <script src="js/share-manager.js"></script>
+    <script src="js/task-manager.js"></script>
+    <script src="js/notification-manager.js"></script>
+    <script src="js/input-validator.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/integration-tests.js"></script>
+    <script src="js/browser-compatibility-tests.js"></script>
+
+    <script>
+        let integrationTestSuite;
+        let compatibilityTestSuite;
+        let originalConsoleLog;
+        let originalConsoleError;
+        let isTestRunning = false;
+
+        // 初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeBrowserInfo();
+            setupConsoleCapture();
+            updateStatus('テスト実行準備完了。実行するテストを選択してください。', 'ready');
+        });
+
+        // ブラウザ情報を表示
+        function initializeBrowserInfo() {
+            const tempSuite = new BrowserCompatibilityTestSuite();
+            const browserInfo = tempSuite.getBrowserInfo();
+            const deviceInfo = tempSuite.getDeviceInfo();
+            
+            const browserInfoList = document.getElementById('browser-info-list');
+            browserInfoList.innerHTML = `
+                <li><strong>ユーザーエージェント:</strong> ${browserInfo.userAgent}</li>
+                <li><strong>画面サイズ:</strong> ${deviceInfo.viewportWidth}x${deviceInfo.viewportHeight}</li>
+                <li><strong>デバイス:</strong> ${deviceInfo.touchSupport ? 'タッチデバイス' : 'デスクトップ'}</li>
+                <li><strong>LocalStorage:</strong> ${browserInfo.supportsLocalStorage ? '✅ サポート' : '❌ 非サポート'}</li>
+                <li><strong>ES6:</strong> ${browserInfo.supportsES6 ? '✅ サポート' : '❌ 非サポート'}</li>
+                <li><strong>Promise:</strong> ${browserInfo.supportsPromises ? '✅ サポート' : '❌ 非サポート'}</li>
+            `;
+        }
+
+        // コンソール出力をキャプチャ
+        function setupConsoleCapture() {
+            const output = document.getElementById('testOutput');
+            
+            originalConsoleLog = console.log;
+            originalConsoleError = console.error;
+
+            console.log = function(...args) {
+                const message = args.join(' ');
+                output.textContent += message + '\n';
+                output.scrollTop = output.scrollHeight;
+                originalConsoleLog.apply(console, args);
+            };
+
+            console.error = function(...args) {
+                const message = args.join(' ');
+                output.textContent += message + '\n';
+                output.scrollTop = output.scrollHeight;
+                originalConsoleError.apply(console, args);
+            };
+        }
+
+        // コンソールを復元
+        function restoreConsole() {
+            if (originalConsoleLog) {
+                console.log = originalConsoleLog;
+            }
+            if (originalConsoleError) {
+                console.error = originalConsoleError;
+            }
+        }
+
+        // ステータス更新
+        function updateStatus(message, className) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${className}`;
+        }
+
+        // プログレスバー更新
+        function updateProgress(current, total, text) {
+            const progressContainer = document.getElementById('progress-container');
+            const progressFill = document.getElementById('progress-fill');
+            const progressText = document.getElementById('progress-text');
+            
+            if (total > 0) {
+                progressContainer.style.display = 'block';
+                const percentage = Math.round((current / total) * 100);
+                progressFill.style.width = `${percentage}%`;
+                progressText.textContent = text || `${current}/${total} (${percentage}%)`;
+            } else {
+                progressContainer.style.display = 'none';
+            }
+        }
+
+        // テスト結果サマリー更新
+        function updateTestSummary(results) {
+            const summaryContainer = document.getElementById('test-summary');
+            summaryContainer.style.display = 'grid';
+            
+            document.getElementById('total-tests').textContent = results.total;
+            document.getElementById('passed-tests').textContent = results.passed;
+            document.getElementById('failed-tests').textContent = results.failed;
+            document.getElementById('error-tests').textContent = results.errors;
+            
+            const successRate = results.total > 0 ? Math.round((results.passed / results.total) * 100) : 0;
+            document.getElementById('success-rate').textContent = `${successRate}%`;
+            
+            // プログレスバーの色を更新
+            const progressFill = document.getElementById('progress-fill');
+            if (successRate >= 90) {
+                progressFill.className = 'progress-fill success';
+            } else if (successRate < 70) {
+                progressFill.className = 'progress-fill danger';
+            } else {
+                progressFill.className = 'progress-fill';
+            }
+        }
+
+        // ボタンの状態を制御
+        function setButtonsEnabled(enabled) {
+            const buttons = ['runIntegrationBtn', 'runCompatibilityBtn', 'runAllBtn'];
+            buttons.forEach(id => {
+                document.getElementById(id).disabled = !enabled;
+            });
+            isTestRunning = !enabled;
+        }
+
+        // 統合テスト実行
+        async function runIntegrationTests() {
+            if (isTestRunning) return;
+            
+            setButtonsEnabled(false);
+            updateStatus('統合テストを実行中...', 'running');
+            clearOutput();
+            
+            try {
+                integrationTestSuite = new IntegrationTestSuite();
+                updateProgress(0, 5, '統合テスト準備中...');
+                
+                const results = await integrationTestSuite.runAllTests();
+                
+                updateProgress(5, 5, '統合テスト完了');
+                updateTestSummary(results);
+                
+                if (results.failed === 0 && results.errors === 0) {
+                    updateStatus(`✅ 統合テスト完了: 全${results.total}件のテストが成功しました`, 'completed');
+                } else {
+                    updateStatus(`❌ 統合テスト完了: ${results.failed + results.errors}件のテストが失敗しました`, 'error');
+                }
+                
+            } catch (error) {
+                console.error('統合テスト実行エラー:', error);
+                updateStatus('❌ 統合テスト実行中にエラーが発生しました', 'error');
+            } finally {
+                setButtonsEnabled(true);
+            }
+        }
+
+        // ブラウザ互換性テスト実行
+        async function runCompatibilityTests() {
+            if (isTestRunning) return;
+            
+            setButtonsEnabled(false);
+            updateStatus('ブラウザ互換性テストを実行中...', 'running');
+            clearOutput();
+            
+            try {
+                compatibilityTestSuite = new BrowserCompatibilityTestSuite();
+                updateProgress(0, 6, 'ブラウザ互換性テスト準備中...');
+                
+                const results = compatibilityTestSuite.runAllTests();
+                
+                updateProgress(6, 6, 'ブラウザ互換性テスト完了');
+                updateTestSummary(results);
+                
+                if (results.failed === 0 && results.errors === 0) {
+                    updateStatus(`✅ ブラウザ互換性テスト完了: 全${results.total}件のテストが成功しました`, 'completed');
+                } else {
+                    updateStatus(`❌ ブラウザ互換性テスト完了: ${results.failed + results.errors}件のテストが失敗しました`, 'error');
+                }
+                
+            } catch (error) {
+                console.error('ブラウザ互換性テスト実行エラー:', error);
+                updateStatus('❌ ブラウザ互換性テスト実行中にエラーが発生しました', 'error');
+            } finally {
+                setButtonsEnabled(true);
+            }
+        }
+
+        // 全テスト実行
+        async function runAllTests() {
+            if (isTestRunning) return;
+            
+            setButtonsEnabled(false);
+            updateStatus('全テストを実行中...', 'running');
+            clearOutput();
+            
+            try {
+                let totalResults = { passed: 0, failed: 0, errors: 0, total: 0 };
+                
+                // 統合テスト実行
+                console.log('🔄 統合テスト開始...\n');
+                updateProgress(0, 11, '統合テスト実行中...');
+                
+                integrationTestSuite = new IntegrationTestSuite();
+                const integrationResults = await integrationTestSuite.runAllTests();
+                
+                totalResults.passed += integrationResults.passed;
+                totalResults.failed += integrationResults.failed;
+                totalResults.errors += integrationResults.errors;
+                totalResults.total += integrationResults.total;
+                
+                updateProgress(5, 11, '統合テスト完了、ブラウザ互換性テスト開始...');
+                
+                // 少し間隔を空ける
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // ブラウザ互換性テスト実行
+                console.log('\n🌐 ブラウザ互換性テスト開始...\n');
+                
+                compatibilityTestSuite = new BrowserCompatibilityTestSuite();
+                const compatibilityResults = compatibilityTestSuite.runAllTests();
+                
+                totalResults.passed += compatibilityResults.passed;
+                totalResults.failed += compatibilityResults.failed;
+                totalResults.errors += compatibilityResults.errors;
+                totalResults.total += compatibilityResults.total;
+                
+                updateProgress(11, 11, '全テスト完了');
+                updateTestSummary(totalResults);
+                
+                // 最終結果の表示
+                console.log('\n🎯 全テスト結果サマリー:');
+                console.log('========================');
+                console.log(`統合テスト: ${integrationResults.passed}/${integrationResults.total} 成功`);
+                console.log(`ブラウザ互換性テスト: ${compatibilityResults.passed}/${compatibilityResults.total} 成功`);
+                console.log(`総合: ${totalResults.passed}/${totalResults.total} 成功 (${Math.round((totalResults.passed / totalResults.total) * 100)}%)`);
+                
+                if (totalResults.failed === 0 && totalResults.errors === 0) {
+                    updateStatus(`🎉 全テスト完了: 全${totalResults.total}件のテストが成功しました！`, 'completed');
+                } else {
+                    updateStatus(`❌ 全テスト完了: ${totalResults.failed + totalResults.errors}件のテストが失敗しました`, 'error');
+                }
+                
+            } catch (error) {
+                console.error('全テスト実行エラー:', error);
+                updateStatus('❌ 全テスト実行中にエラーが発生しました', 'error');
+            } finally {
+                setButtonsEnabled(true);
+            }
+        }
+
+        // 出力クリア
+        function clearOutput() {
+            document.getElementById('testOutput').textContent = 'テスト出力がここに表示されます...';
+            document.getElementById('test-summary').style.display = 'none';
+            document.getElementById('progress-container').style.display = 'none';
+        }
+
+        // ページ離脱時の警告
+        window.addEventListener('beforeunload', function(e) {
+            if (isTestRunning) {
+                e.preventDefault();
+                e.returnValue = 'テストが実行中です。本当にページを離れますか？';
+            }
+        });
+    </script>
+</body>
+</html>

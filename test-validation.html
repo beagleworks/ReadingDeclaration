@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Input Validation Tests</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-results {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .info { color: #17a2b8; }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Input Validation Tests</h1>
+    <div id="test-results" class="test-results">
+        <p>テストを実行中...</p>
+    </div>
+
+    <script src="js/input-validator.js"></script>
+    <script src="js/input-validator.test.js"></script>
+    <script>
+        // テスト結果をHTMLに表示
+        const originalConsole = {
+            log: console.log,
+            error: console.error
+        };
+        
+        const testResults = document.getElementById('test-results');
+        let output = '';
+        
+        console.log = function(...args) {
+            const message = args.join(' ');
+            output += message + '\n';
+            originalConsole.log(...args);
+        };
+        
+        console.error = function(...args) {
+            const message = args.join(' ');
+            output += message + '\n';
+            originalConsole.error(...args);
+        };
+        
+        // テスト実行
+        setTimeout(() => {
+            try {
+                runInputValidatorTests();
+                
+                // 結果をHTMLに表示
+                testResults.innerHTML = `<pre>${output}</pre>`;
+                
+                // 成功/失敗に応じてスタイルを適用
+                if (output.includes('全てのテストが成功しました')) {
+                    testResults.className = 'test-results success';
+                } else if (output.includes('件失敗')) {
+                    testResults.className = 'test-results error';
+                }
+            } catch (error) {
+                testResults.innerHTML = `<div class="error">テスト実行エラー: ${error.message}</div>`;
+            }
+        }, 100);
+    </script>
+</body>
+</html>

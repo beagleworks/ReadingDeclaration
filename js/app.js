@@ -8,9 +8,17 @@ class ReadingDeclarationApp {
         this.storageManager = new StorageManager();
         this.shareManager = new ShareManager();
         this.taskManager = new TaskManager(this.storageManager);
+        this.notificationManager = new NotificationManager();
+        this.inputValidator = new InputValidator();
         
         // DOM要素の参照
         this.elements = {};
+        
+        // バリデーション状態
+        this.validationState = {
+            bookTitle: { isValid: false, errors: [] },
+            author: { isValid: true, errors: [] } // 任意項目なので初期状態は有効
+        };
         
         // 初期化
         this.init();
@@ -45,6 +53,10 @@ class ReadingDeclarationApp {
             bookTitleInput: document.getElementById('book-title'),
             authorInput: document.getElementById('author'),
             
+            // 文字カウンター
+            bookTitleCounter: document.getElementById('book-title-counter'),
+            authorCounter: document.getElementById('author-counter'),
+            
             // タスクリスト関連
             activeTasksList: document.getElementById('active-tasks'),
             completedTasksList: document.getElementById('completed-tasks'),
@@ -75,11 +87,7 @@ class ReadingDeclarationApp {
         }
 
         // 入力フィールドのリアルタイムバリデーション
-        if (this.elements.bookTitleInput) {
-            this.elements.bookTitleInput.addEventListener('input', () => {
-                this.validateBookTitle();
-            });
-        }
+        this.setupInputValidation();
 
         // ページ離脱前の確認（アクティブなタスクがある場合）
         window.addEventListener('beforeunload', (e) => {
@@ -97,24 +105,124 @@ class ReadingDeclarationApp {
     }
 
     /**
+     * 入力バリデーションの設定
+     */
+    setupInputValidation() {
+        // 書籍タイトルのバリデーション
+        if (this.elements.bookTitleInput) {
+            this.inputValidator.setupRealtimeValidation(
+                this.elements.bookTitleInput,
+                (fieldName, result) => {
+                    this.validationState[fieldName] = result;
+                    this.updateCharacterCounter('bookTitle');
+                    this.updateSubmitButton();
+                }
+            );
+        }
+
+        // 著者名のバリデーション
+        if (this.elements.authorInput) {
+            this.inputValidator.setupRealtimeValidation(
+                this.elements.authorInput,
+                (fieldName, result) => {
+                    this.validationState[fieldName] = result;
+                    this.updateCharacterCounter('author');
+                    this.updateSubmitButton();
+                }
+            );
+        }
+    }
+
+    /**
+     * 文字カウンターの更新
+     * @param {string} fieldName - フィールド名
+     */
+    updateCharacterCounter(fieldName) {
+        const input = this.elements[fieldName + 'Input'];
+        const counter = this.elements[fieldName + 'Counter'];
+        
+        if (!input || !counter) return;
+
+        const currentLength = input.value.length;
+        const maxLength = input.getAttribute('maxlength') || 0;
+        
+        counter.textContent = `${currentLength}/${maxLength}文字`;
+        
+        // 文字数に応じてスタイルを変更
+        counter.classList.remove('warning', 'error');
+        
+        if (currentLength > maxLength * 0.9) {
+            counter.classList.add('warning');
+        }
+        
+        if (currentLength >= maxLength) {
+            counter.classList.add('error');
+        }
+    }
+
+    /**
+     * 送信ボタンの状態更新
+     */
+    updateSubmitButton() {
+        const submitButton = this.elements.bookForm.querySelector('button[type="submit"]');
+        if (!submitButton) return;
+
+        const isFormValid = this.validationState.bookTitle.isValid && 
+                           this.validationState.author.isValid;
+        
+        submitButton.disabled = !isFormValid;
+        
+        if (isFormValid) {
+            submitButton.classList.remove('disabled');
+            submitButton.setAttribute('aria-describedby', 'submit-help');
+        } else {
+            submitButton.classList.add('disabled');
+            submitButton.setAttribute('aria-describedby', 'submit-help validation-error');
+        }
+    }
+
+    /**
      * フォーム送信の処理
      */
     async handleFormSubmit() {
         try {
-            const bookTitle = this.elements.bookTitleInput.value.trim();
-            const author = this.elements.authorInput.value.trim();
+            // フォームデータを取得
+            const formData = {
+                bookTitle: this.elements.bookTitleInput.value,
+                author: this.elements.authorInput.value
+            };
 
-            // バリデーション
-            if (!bookTitle) {
-                this.showMessage('書籍タイトルを入力してください', 'error');
-                this.elements.bookTitleInput.focus();
+            // 包括的なバリデーション
+            const validationResult = this.inputValidator.validateForm(formData);
+            
+            if (!validationResult.isValid) {
+                // バリデーションエラーを表示
+                this.notificationManager.showValidationErrors(validationResult.errors);
+                
+                // 最初のエラーフィールドにフォーカス
+                const firstErrorField = Object.keys(validationResult.fieldErrors)[0];
+                if (firstErrorField && this.elements[firstErrorField + 'Input']) {
+                    this.elements[firstErrorField + 'Input'].focus();
+                }
                 return;
             }
+
+            // サニタイズされたデータを使用
+            const { bookTitle, author } = validationResult.sanitizedData;
 
             // タスクを作成
             const task = this.taskManager.addTask(bookTitle, author);
             if (!task) {
-                this.showMessage('タスクの作成に失敗しました', 'error');
+                this.notificationManager.error('タスクの作成に失敗しました', {
+                    details: 'ローカルストレージへの保存でエラーが発生しました',
+                    actions: [
+                        {
+                            label: '再試行',
+                            style: 'btn-primary',
+                            handler: () => this.handleFormSubmit()
+                        }
+                    ]
+                });
                 return;
             }
 
@@ -122,14 +230,16 @@ class ReadingDeclarationApp {
             const shareResult = await this.shareManager.shareDeclaration(bookTitle, author);
             
             if (shareResult.success) {
-                this.showMessage('読書宣言をシェアしました！', 'success');
+                this.notificationManager.success('読書宣言をシェアしました！', {
+                    details: `「${bookTitle}」の読書を開始しました`
+                });
             } else {
                 // エラータイプに応じたメッセージを表示
-                this.handleShareError(shareResult, '読書宣言');
+                this.notificationManager.showShareError('読書宣言', shareResult);
             }
 
             // フォームをリセット
-            this.elements.bookForm.reset();
+            this.resetForm();
             
             // タスクリストを更新
             this.displayTasks();
@@ -139,27 +249,36 @@ class ReadingDeclarationApp {
 
         } catch (error) {
             console.error('フォーム送信エラー:', error);
-            this.showMessage('エラーが発生しました', 'error');
+            this.notificationManager.critical('予期しないエラーが発生しました', {
+                details: error.message,
+                errorCode: 'FORM_SUBMIT_ERROR',
+                retryHandler: () => this.handleFormSubmit()
+            });
         }
     }
 
     /**
-     * 書籍タイトルのバリデーション
+     * フォームをリセット
      */
-    validateBookTitle() {
-        const input = this.elements.bookTitleInput;
-        const value = input.value.trim();
+    resetForm() {
+        // フォーム要素をリセット
+        this.elements.bookForm.reset();
         
-        if (value.length === 0) {
-            input.setCustomValidity('書籍タイトルは必須です');
-            input.setAttribute('aria-invalid', 'true');
-        } else if (value.length > 100) {
-            input.setCustomValidity('書籍タイトルは100文字以内で入力してください');
-            input.setAttribute('aria-invalid', 'true');
-        } else {
-            input.setCustomValidity('');
-            input.setAttribute('aria-invalid', 'false');
-        }
+        // バリデーション状態をリセット
+        this.inputValidator.resetFormValidation(this.elements.bookForm);
+        
+        // バリデーション状態を初期化
+        this.validationState = {
+            bookTitle: { isValid: false, errors: [] },
+            author: { isValid: true, errors: [] }
+        };
+        
+        // 文字カウンターをリセット
+        this.updateCharacterCounter('bookTitle');
+        this.updateCharacterCounter('author');
+        
+        // 送信ボタンの状態を更新
+        this.updateSubmitButton();
     }
 
     /**
@@ -226,32 +345,37 @@ class ReadingDeclarationApp {
         const createdDate = new Date(task.createdAt).toLocaleDateString('ja-JP');
         const completedDate = task.completedAt ? new Date(task.completedAt).toLocaleDateString('ja-JP') : '';
 
+        // セキュリティ: すべてのユーザー入力をサニタイズ
+        const sanitizedTitle = this.inputValidator.sanitizeForOutput(task.bookTitle);
+        const sanitizedAuthor = task.author ? this.inputValidator.sanitizeForOutput(task.author) : '';
+        const sanitizedId = this.escapeHtml(task.id);
+
         return `
             <div class="task-item ${isCompleted ? 'completed' : ''}" 
-                 data-task-id="${task.id}"
+                 data-task-id="${sanitizedId}"
                  role="article"
-                 aria-label="${this.escapeHtml(task.bookTitle)}の読書タスク"
+                 aria-label="${sanitizedTitle}の読書タスク"
                  tabindex="0">
                 <div class="task-info">
-                    <h4 id="task-title-${task.id}">${this.escapeHtml(task.bookTitle)}</h4>
-                    ${task.author ? `<p class="author">著者: ${this.escapeHtml(task.author)}</p>` : ''}
+                    <h4 id="task-title-${sanitizedId}">${sanitizedTitle}</h4>
+                    ${sanitizedAuthor ? `<p class="author">著者: ${sanitizedAuthor}</p>` : ''}
                     <p class="date">
                         開始: ${createdDate}
                         ${completedDate ? ` | 完了: ${completedDate}` : ''}
                     </p>
                 </div>
-                <div class="task-actions" role="group" aria-labelledby="task-title-${task.id}">
+                <div class="task-actions" role="group" aria-labelledby="task-title-${sanitizedId}">
                     ${!isCompleted ? `
                         <button class="btn btn-success btn-small" 
-                                onclick="app.completeTask('${task.id}')"
-                                aria-label="${this.escapeHtml(task.bookTitle)}の読了をシェア"
+                                onclick="app.completeTask('${sanitizedId}')"
+                                aria-label="${sanitizedTitle}の読了をシェア"
                                 tabindex="0">
                             ✅ 読了をシェア
                         </button>
                     ` : ''}
                     <button class="btn btn-danger btn-small" 
-                            onclick="app.deleteTask('${task.id}')"
-                            aria-label="${this.escapeHtml(task.bookTitle)}のタスクを削除"
+                            onclick="app.deleteTask('${sanitizedId}')"
+                            aria-label="${sanitizedTitle}のタスクを削除"
                             tabindex="0">
                         🗑️ 削除
                     </button>
@@ -268,14 +392,26 @@ class ReadingDeclarationApp {
         try {
             const task = this.taskManager.getTask(taskId);
             if (!task) {
-                this.showMessage('タスクが見つかりません', 'error');
+                this.notificationManager.error('タスクが見つかりません', {
+                    details: '指定されたタスクIDが存在しません',
+                    errorCode: 'TASK_NOT_FOUND'
+                });
                 return;
             }
 
             // タスクを完了状態に更新
             const completedTask = this.taskManager.completeTask(taskId);
             if (!completedTask) {
-                this.showMessage('タスクの完了処理に失敗しました', 'error');
+                this.notificationManager.error('タスクの完了処理に失敗しました', {
+                    details: 'ローカルストレージの更新でエラーが発生しました',
+                    actions: [
+                        {
+                            label: '再試行',
+                            style: 'btn-primary',
+                            handler: () => this.completeTask(taskId)
+                        }
+                    ]
+                });
                 return;
             }
 
@@ -283,10 +419,12 @@ class ReadingDeclarationApp {
             const shareResult = await this.shareManager.shareCompletion(task.bookTitle, task.author);
             
             if (shareResult.success) {
-                this.showMessage('読了報告をシェアしました！', 'success');
+                this.notificationManager.success('読了報告をシェアしました！', {
+                    details: `「${task.bookTitle}」を読み終わりました`
+                });
             } else {
                 // エラータイプに応じたメッセージを表示
-                this.handleShareError(shareResult, '読了報告');
+                this.notificationManager.showShareError('読了報告', shareResult);
             }
 
             // タスクリストを更新
@@ -297,7 +435,11 @@ class ReadingDeclarationApp {
 
         } catch (error) {
             console.error('タスク完了エラー:', error);
-            this.showMessage('エラーが発生しました', 'error');
+            this.notificationManager.critical('タスク完了処理でエラーが発生しました', {
+                details: error.message,
+                errorCode: 'TASK_COMPLETE_ERROR',
+                retryHandler: () => this.completeTask(taskId)
+            });
         }
     }
 
@@ -309,7 +451,10 @@ class ReadingDeclarationApp {
         try {
             const task = this.taskManager.getTask(taskId);
             if (!task) {
-                this.showMessage('タスクが見つかりません', 'error');
+                this.notificationManager.error('タスクが見つかりません', {
+                    details: '指定されたタスクIDが存在しません',
+                    errorCode: 'TASK_NOT_FOUND'
+                });
                 return;
             }
 
@@ -320,186 +465,37 @@ class ReadingDeclarationApp {
             // タスクを削除
             const deleted = this.taskManager.deleteTask(taskId);
             if (deleted) {
-                this.showMessage('タスクを削除しました', 'success');
+                this.notificationManager.success('タスクを削除しました', {
+                    details: `「${task.bookTitle}」を削除しました`
+                });
                 this.displayTasks();
                 
                 // フォーカスを適切な場所に移動
                 this.manageFocusAfterTaskUpdate();
             } else {
-                this.showMessage('タスクの削除に失敗しました', 'error');
+                this.notificationManager.error('タスクの削除に失敗しました', {
+                    details: 'ローカルストレージからの削除でエラーが発生しました',
+                    actions: [
+                        {
+                            label: '再試行',
+                            style: 'btn-primary',
+                            handler: () => this.deleteTask(taskId)
+                        }
+                    ]
+                });
             }
 
         } catch (error) {
             console.error('タスク削除エラー:', error);
-            this.showMessage('エラーが発生しました', 'error');
+            this.notificationManager.critical('タスク削除処理でエラーが発生しました', {
+                details: error.message,
+                errorCode: 'TASK_DELETE_ERROR',
+                retryHandler: () => this.deleteTask(taskId)
+            });
         }
     }
 
-    /**
-     * メッセージの表示
-     * @param {string} message - 表示するメッセージ
-     * @param {string} type - メッセージタイプ ('success', 'error', 'info')
-     */
-    showMessage(message, type = 'info') {
-        if (!this.elements.messageContainer) return;
 
-        const messageElement = document.createElement('div');
-        messageElement.className = `message ${type}`;
-        messageElement.textContent = message;
-        messageElement.setAttribute('role', 'alert');
-        messageElement.setAttribute('aria-live', 'polite');
-        messageElement.setAttribute('tabindex', '0');
-
-        // エラーメッセージの場合はより強い通知
-        if (type === 'error') {
-            messageElement.setAttribute('aria-live', 'assertive');
-        }
-
-        // 閉じるボタンを追加
-        const closeButton = document.createElement('button');
-        closeButton.className = 'message-close';
-        closeButton.innerHTML = '×';
-        closeButton.setAttribute('aria-label', 'メッセージを閉じる');
-        closeButton.onclick = () => {
-            if (messageElement.parentNode) {
-                messageElement.parentNode.removeChild(messageElement);
-            }
-        };
-        
-        messageElement.appendChild(closeButton);
-        this.elements.messageContainer.appendChild(messageElement);
-
-        // フォーカスをメッセージに移動（エラーの場合）
-        if (type === 'error') {
-            messageElement.focus();
-        }
-
-        // 5秒後に自動削除
-        setTimeout(() => {
-            if (messageElement.parentNode) {
-                messageElement.parentNode.removeChild(messageElement);
-            }
-        }, 5000);
-    }
-
-    /**
-     * シェアエラーの処理
-     * @param {Object} shareResult - シェア結果オブジェクト
-     * @param {string} shareType - シェアタイプ（'読書宣言' または '読了報告'）
-     */
-    handleShareError(shareResult, shareType) {
-        const { errorType, error, manualOption } = shareResult;
-        
-        switch (errorType) {
-            case 'POPUP_BLOCKED':
-                this.showMessage(
-                    'ポップアップがブロックされました。ブラウザの設定でポップアップを許可するか、手動で投稿してください。',
-                    'error'
-                );
-                break;
-                
-            case 'URL_GENERATION_ERROR':
-                this.showMessage(
-                    `${shareType}のURL生成に失敗しました。手動で投稿してください。`,
-                    'error'
-                );
-                break;
-                
-            case 'CRITICAL_ERROR':
-                this.showMessage(
-                    `${shareType}のシェアに失敗しました。手動で投稿してください。`,
-                    'error'
-                );
-                break;
-                
-            default:
-                this.showMessage(
-                    `${shareType}のシェアに失敗しました。手動で投稿してください。`,
-                    'error'
-                );
-        }
-        
-        // マニュアル投稿オプションがある場合の追加メッセージ
-        if (manualOption) {
-            if (manualOption.success) {
-                this.showMessage(manualOption.message, 'info');
-                
-                // テキストが表示できる場合は表示
-                if (manualOption.text && !manualOption.copied) {
-                    this.showManualPostText(manualOption.text);
-                }
-            } else {
-                this.showMessage(manualOption.message, 'info');
-                this.showManualPostText(manualOption.text);
-            }
-        }
-    }
-
-    /**
-     * 手動投稿用テキストを表示
-     * @param {string} text - 表示するテキスト
-     */
-    showManualPostText(text) {
-        if (!this.elements.messageContainer) return;
-
-        const textElement = document.createElement('div');
-        textElement.className = 'message manual-post-text';
-        textElement.setAttribute('role', 'region');
-        textElement.setAttribute('aria-label', '手動投稿用テキスト');
-        textElement.setAttribute('tabindex', '0');
-        
-        const escapedText = this.escapeHtml(text);
-        textElement.innerHTML = `
-            <div class="manual-post-header">手動投稿用テキスト:</div>
-            <div class="manual-post-content" 
-                 role="textbox" 
-                 aria-readonly="true"
-                 aria-label="投稿用テキスト"
-                 tabindex="0">${escapedText}</div>
-            <button class="btn btn-small copy-text-btn" 
-                    onclick="app.copyManualText('${escapedText}')"
-                    aria-label="投稿用テキストをクリップボードにコピー"
-                    tabindex="0">
-                📋 コピー
-            </button>
-            <button class="message-close" 
-                    onclick="this.parentElement.remove()"
-                    aria-label="手動投稿テキストを閉じる"
-                    tabindex="0">
-                ×
-            </button>
-        `;
-
-        this.elements.messageContainer.appendChild(textElement);
-
-        // フォーカスをテキスト要素に移動
-        textElement.focus();
-
-        // 10秒後に自動削除
-        setTimeout(() => {
-            if (textElement.parentNode) {
-                textElement.parentNode.removeChild(textElement);
-            }
-        }, 10000);
-    }
-
-    /**
-     * 手動投稿テキストをコピー
-     * @param {string} text - コピーするテキスト
-     */
-    async copyManualText(text) {
-        try {
-            const copied = await this.shareManager.copyToClipboard(text);
-            if (copied) {
-                this.showMessage('テキストをクリップボードにコピーしました', 'success');
-            } else {
-                this.showMessage('コピーに失敗しました', 'error');
-            }
-        } catch (error) {
-            console.error('手動テキストコピーエラー:', error);
-            this.showMessage('コピーに失敗しました', 'error');
-        }
-    }
 
     /**
      * キーボードショートカットの処理
@@ -517,7 +513,7 @@ class ReadingDeclarationApp {
 
         // Escapeキーでメッセージを閉じる
         if (e.key === 'Escape') {
-            this.clearMessages();
+            this.notificationManager.clearAll();
         }
 
         // タスクリスト内でのキーボードナビゲーション
@@ -554,14 +550,7 @@ class ReadingDeclarationApp {
         focusableElements[nextIndex].focus();
     }
 
-    /**
-     * 全てのメッセージをクリア
-     */
-    clearMessages() {
-        if (this.elements.messageContainer) {
-            this.elements.messageContainer.innerHTML = '';
-        }
-    }
+
 
     /**
      * タスク更新後のフォーカス管理
@@ -586,7 +575,19 @@ class ReadingDeclarationApp {
         const storageInfo = this.storageManager.getStorageInfo();
         
         if (!storageInfo.isAvailable) {
-            this.showMessage('ローカルストレージが利用できません。セッションストレージを使用します。', 'info');
+            this.notificationManager.warning('ローカルストレージが利用できません', {
+                details: 'セッションストレージを使用します。ブラウザを閉じるとデータが失われます。',
+                persistent: true,
+                actions: [
+                    {
+                        label: 'ブラウザ設定を確認',
+                        style: 'btn-primary',
+                        handler: () => {
+                            this.notificationManager.info('ブラウザの設定でローカルストレージを有効にしてください');
+                        }
+                    }
+                ]
+            });
         }
         
         console.log('ストレージ情報:', storageInfo);

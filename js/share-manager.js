@@ -15,10 +15,14 @@ class ShareManager {
      * @returns {string} 生成されたテキスト
      */
     generateDeclarationText(bookTitle, author = '') {
-        let text = `# 読書宣言\n\n「${bookTitle}」`;
+        // セキュリティ: 入力をサニタイズ
+        const sanitizedTitle = this.sanitizeForShare(bookTitle);
+        const sanitizedAuthor = author ? this.sanitizeForShare(author) : '';
         
-        if (author && author.trim()) {
-            text += `\n著者: ${author}`;
+        let text = `# 読書宣言\n\n「${sanitizedTitle}」`;
+        
+        if (sanitizedAuthor && sanitizedAuthor.trim()) {
+            text += `\n著者: ${sanitizedAuthor}`;
         }
         
         text += '\n\n読書開始！📚';
@@ -26,11 +30,11 @@ class ShareManager {
         // 文字数制限チェック
         if (text.length > this.maxTweetLength) {
             // 長すぎる場合は短縮
-            const baseText = `# 読書宣言\n\n「${bookTitle}」\n\n読書開始！📚`;
+            const baseText = `# 読書宣言\n\n「${sanitizedTitle}」\n\n読書開始！📚`;
             if (baseText.length > this.maxTweetLength) {
                 // タイトルも短縮が必要
                 const availableLength = this.maxTweetLength - '# 読書宣言\n\n「」\n\n読書開始！📚'.length;
-                const truncatedTitle = bookTitle.substring(0, availableLength - 3) + '...';
+                const truncatedTitle = sanitizedTitle.substring(0, availableLength - 3) + '...';
                 text = `# 読書宣言\n\n「${truncatedTitle}」\n\n読書開始！📚`;
             } else {
                 text = baseText;
@@ -47,10 +51,14 @@ class ShareManager {
      * @returns {string} 生成されたテキスト
      */
     generateCompletionText(bookTitle, author = '') {
-        let text = `📖 読了報告\n\n「${bookTitle}」`;
+        // セキュリティ: 入力をサニタイズ
+        const sanitizedTitle = this.sanitizeForShare(bookTitle);
+        const sanitizedAuthor = author ? this.sanitizeForShare(author) : '';
         
-        if (author && author.trim()) {
-            text += `\n著者: ${author}`;
+        let text = `📖 読了報告\n\n「${sanitizedTitle}」`;
+        
+        if (sanitizedAuthor && sanitizedAuthor.trim()) {
+            text += `\n著者: ${sanitizedAuthor}`;
         }
         
         text += '\n\n読み終わりました！✨\n\n#読書記録';
@@ -58,11 +66,11 @@ class ShareManager {
         // 文字数制限チェック
         if (text.length > this.maxTweetLength) {
             // 長すぎる場合は短縮
-            const baseText = `📖 読了報告\n\n「${bookTitle}」\n\n読み終わりました！✨\n\n#読書記録`;
+            const baseText = `📖 読了報告\n\n「${sanitizedTitle}」\n\n読み終わりました！✨\n\n#読書記録`;
             if (baseText.length > this.maxTweetLength) {
                 // タイトルも短縮が必要
                 const availableLength = this.maxTweetLength - '📖 読了報告\n\n「」\n\n読み終わりました！✨\n\n#読書記録'.length;
-                const truncatedTitle = bookTitle.substring(0, availableLength - 3) + '...';
+                const truncatedTitle = sanitizedTitle.substring(0, availableLength - 3) + '...';
                 text = `📖 読了報告\n\n「${truncatedTitle}」\n\n読み終わりました！✨\n\n#読書記録`;
             } else {
                 text = baseText;
@@ -343,5 +351,45 @@ class ShareManager {
                 manualOption: manualResult
             };
         }
+    }
+
+    /**
+     * シェア用テキストのサニタイゼーション
+     * @param {string} text - サニタイズするテキスト
+     * @returns {string} サニタイズされたテキスト
+     */
+    sanitizeForShare(text) {
+        if (typeof text !== 'string') {
+            return '';
+        }
+
+        let sanitized = text;
+
+        // 前後の空白を削除
+        sanitized = sanitized.trim();
+
+        // 制御文字を削除
+        sanitized = sanitized.replace(/[\x00-\x1F\x7F]/g, '');
+
+        // 危険なパターンを削除
+        const dangerousPatterns = [
+            /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
+            /javascript:/gi,
+            /vbscript:/gi,
+            /data:text\/html/gi,
+            /on\w+\s*=/gi
+        ];
+
+        for (const pattern of dangerousPatterns) {
+            sanitized = sanitized.replace(pattern, '');
+        }
+
+        // 連続する空白を単一の空白に変換
+        sanitized = sanitized.replace(/\s+/g, ' ');
+
+        // 改行文字を正規化
+        sanitized = sanitized.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
+        return sanitized;
     }
 }

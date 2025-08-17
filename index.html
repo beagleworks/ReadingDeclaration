@@ -7,6 +7,12 @@
     <meta name="keywords" content="読書, 宣言, Twitter, X, シェア, 読書記録">
     <meta name="author" content="Reading Declaration App">
     
+    <!-- Security Headers -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://x.com; frame-ancestors 'none';">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+    
     <!-- Open Graph tags for social sharing -->
     <meta property="og:title" content="読書宣言アプリ">
     <meta property="og:description" content="読書の開始と完了をXにシェアできるWebアプリケーション">
@@ -47,9 +53,12 @@
                             required 
                             placeholder="読む本のタイトルを入力してください"
                             maxlength="100"
-                            aria-describedby="book-title-help"
+                            aria-describedby="book-title-help book-title-counter"
                             aria-invalid="false"
+                            autocomplete="off"
+                            spellcheck="false"
                         >
+                        <div class="character-counter" id="book-title-counter" aria-live="polite">0/100文字</div>
                         <div id="book-title-help" class="sr-only">書籍タイトルは必須項目です。最大100文字まで入力できます。</div>
                     </div>
                     
@@ -61,8 +70,11 @@
                             name="author" 
                             placeholder="著者名を入力してください（任意）"
                             maxlength="50"
-                            aria-describedby="author-help"
+                            aria-describedby="author-help author-counter"
+                            autocomplete="off"
+                            spellcheck="false"
                         >
+                        <div class="character-counter" id="author-counter" aria-live="polite">0/50文字</div>
                         <div id="author-help" class="sr-only">著者名は任意項目です。最大50文字まで入力できます。</div>
                     </div>
                     
@@ -114,6 +126,8 @@
     <script src="js/storage-manager.js"></script>
     <script src="js/share-manager.js"></script>
     <script src="js/task-manager.js"></script>
+    <script src="js/notification-manager.js"></script>
+    <script src="js/input-validator.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>
