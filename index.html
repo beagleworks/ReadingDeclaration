@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="読書宣言アプリ - 読書の開始と完了をXにシェアできるWebアプリケーション">
+    <meta name="keywords" content="読書, 宣言, Twitter, X, シェア, 読書記録">
+    <meta name="author" content="Reading Declaration App">
+    
+    <!-- Open Graph tags for social sharing -->
+    <meta property="og:title" content="読書宣言アプリ">
+    <meta property="og:description" content="読書の開始と完了をXにシェアできるWebアプリケーション">
+    <meta property="og:type" content="website">
+    
+    <!-- Twitter Card tags -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="読書宣言アプリ">
+    <meta name="twitter:description" content="読書の開始と完了をXにシェアできるWebアプリケーション">
+    
+    <title>読書宣言アプリ</title>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+</head>
+<body>
+    <div id="app">
+        <header class="app-header">
+            <h1>📚 読書宣言アプリ</h1>
+            <p class="app-description">読書の開始と完了をXにシェアしよう</p>
+        </header>
+
+        <main class="main-content">
+            <!-- Book Form Section -->
+            <section class="book-form-section">
+                <h2>新しい読書宣言</h2>
+                <form id="book-form" class="book-form">
+                    <div class="form-group">
+                        <label for="book-title">書籍タイトル *</label>
+                        <input 
+                            type="text" 
+                            id="book-title" 
+                            name="bookTitle" 
+                            required 
+                            placeholder="読む本のタイトルを入力してください"
+                            maxlength="100"
+                        >
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="author">著者名</label>
+                        <input 
+                            type="text" 
+                            id="author" 
+                            name="author" 
+                            placeholder="著者名を入力してください（任意）"
+                            maxlength="50"
+                        >
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        📢 読書宣言をシェア
+                    </button>
+                </form>
+            </section>
+
+            <!-- Task List Section -->
+            <section class="task-list-section">
+                <h2>読書タスク</h2>
+                
+                <!-- Active Tasks -->
+                <div class="task-category">
+                    <h3>📖 読書中</h3>
+                    <div id="active-tasks" class="task-list">
+                        <!-- Active tasks will be dynamically inserted here -->
+                    </div>
+                </div>
+                
+                <!-- Completed Tasks -->
+                <div class="task-category">
+                    <h3>✅ 読了済み</h3>
+                    <div id="completed-tasks" class="task-list">
+                        <!-- Completed tasks will be dynamically inserted here -->
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Error/Success Messages -->
+        <div id="message-container" class="message-container" role="alert" aria-live="polite">
+            <!-- Messages will be dynamically inserted here -->
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="js/task-model.js"></script>
+    <script src="js/storage-manager.js"></script>
+    <script src="js/share-manager.js"></script>
+    <script src="js/task-manager.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
