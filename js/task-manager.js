@@ -3,9 +3,10 @@
  * タスクの作成、完了、削除、取得機能を提供
  */
 class TaskManager {
-    constructor(storageManager) {
+    constructor(storageManager, options = {}) {
         this.storageManager = storageManager;
         this.tasks = [];
+        this.enableLogging = options.enableLogging !== false; // デフォルトで有効
         this.loadTasks();
     }
 
@@ -18,7 +19,7 @@ class TaskManager {
         try {
             this.tasks = this.storageManager.loadTasks();
         } catch (error) {
-            console.error('タスクの読み込みに失敗しました:', error);
+            if (this.enableLogging) console.error('タスクの読み込みに失敗しました:', error);
             this.tasks = [];
         }
     }
@@ -54,7 +55,7 @@ class TaskManager {
 
             return task.toJSON();
         } catch (error) {
-            console.error('タスクの追加に失敗しました:', error);
+            if (this.enableLogging) console.error('タスクの追加に失敗しました:', error);
             return null;
         }
     }
@@ -98,7 +99,7 @@ class TaskManager {
 
             return updatedTaskData;
         } catch (error) {
-            console.error('タスクの完了処理に失敗しました:', error);
+            if (this.enableLogging) console.error('タスクの完了処理に失敗しました:', error);
             return null;
         }
     }
@@ -130,7 +131,7 @@ class TaskManager {
 
             return true;
         } catch (error) {
-            console.error('タスクの削除に失敗しました:', error);
+            if (this.enableLogging) console.error('タスクの削除に失敗しました:', error);
             return false;
         }
     }
@@ -220,7 +221,7 @@ class TaskManager {
             this.tasks = [];
             return true;
         } catch (error) {
-            console.error('全タスクの削除に失敗しました:', error);
+            if (this.enableLogging) console.error('全タスクの削除に失敗しました:', error);
             return false;
         }
     }
@@ -231,4 +232,9 @@ class TaskManager {
     refresh() {
         this.loadTasks();
     }
+}
+
+// Node.js環境でグローバルに公開
+if (typeof global !== 'undefined') {
+    global.TaskManager = TaskManager;
 }
