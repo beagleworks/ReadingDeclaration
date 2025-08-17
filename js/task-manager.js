@@ -42,16 +42,14 @@ class TaskManager {
             // Taskモデルを使用してタスクを作成
             const task = new Task(prepared.data.bookTitle, prepared.data.author);
 
-            // メモリ上のタスクリストに追加
-            this.tasks.push(task.toJSON());
-
             // ストレージに保存
             const saved = this.storageManager.saveTask(task.toJSON());
             if (!saved) {
-                // 保存に失敗した場合はメモリからも削除
-                this.tasks = this.tasks.filter(t => t.id !== task.id);
                 throw new Error('タスクの保存に失敗しました');
             }
+
+            // ストレージから再読み込みして、メモリとストレージの状態を同期
+            this.loadTasks();
 
             return task.toJSON();
         } catch (error) {
@@ -67,12 +65,11 @@ class TaskManager {
      */
     completeTask(taskId) {
         try {
-            const taskIndex = this.tasks.findIndex(t => t.id === taskId);
-            if (taskIndex === -1) {
+            const taskData = this.getTask(taskId);
+            if (!taskData) {
                 throw new Error('指定されたタスクが見つかりません');
             }
 
-            const taskData = this.tasks[taskIndex];
             if (taskData.status === 'completed') {
                 throw new Error('このタスクは既に完了しています');
             }
@@ -82,9 +79,6 @@ class TaskManager {
             task.complete();
             const updatedTaskData = task.toJSON();
 
-            // メモリ上のタスクを更新
-            this.tasks[taskIndex] = updatedTaskData;
-
             // ストレージに保存
             const saved = this.storageManager.updateTask(taskId, {
                 status: 'completed',
@@ -92,10 +86,11 @@ class TaskManager {
             });
 
             if (!saved) {
-                // 保存に失敗した場合は元に戻す
-                this.tasks[taskIndex] = taskData;
                 throw new Error('タスクの更新に失敗しました');
             }
+
+            // ストレージから再読み込み
+            this.loadTasks();
 
             return updatedTaskData;
         } catch (error) {
@@ -111,23 +106,18 @@ class TaskManager {
      */
     deleteTask(taskId) {
         try {
-            const taskIndex = this.tasks.findIndex(t => t.id === taskId);
-            if (taskIndex === -1) {
+            if (!this.getTask(taskId)) {
                 throw new Error('指定されたタスクが見つかりません');
             }
-
-            const deletedTask = this.tasks[taskIndex];
-
-            // メモリ上のタスクを削除
-            this.tasks.splice(taskIndex, 1);
 
             // ストレージから削除
             const deleted = this.storageManager.deleteTask(taskId);
             if (!deleted) {
-                // 削除に失敗した場合は元に戻す
-                this.tasks.splice(taskIndex, 0, deletedTask);
                 throw new Error('タスクの削除に失敗しました');
             }
+
+            // ストレージから再読み込み
+            this.loadTasks();
 
             return true;
         } catch (error) {
