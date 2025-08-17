@@ -610,8 +610,6 @@ let app;
 
 // DOMContentLoadedイベントでアプリを初期化
 document.addEventListener('DOMContentLoaded', () => {
-    app = new ReadingDeclarationApp();
+    // グローバルスコープでアプリインスタンスを利用可能にする
+    window.app = new ReadingDeclarationApp();
 });
-
-// グローバルスコープでアプリインスタンスを利用可能にする
-window.app = app;
