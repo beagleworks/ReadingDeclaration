@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskManager Unit Tests</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-controls {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 0 10px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        #testOutput {
+            background: #1e1e1e;
+            color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.4;
+            white-space: pre-wrap;
+            max-height: 600px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            text-align: center;
+            font-weight: bold;
+        }
+        .status.ready {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.running {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .status.completed {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📋 TaskManager Unit Tests</h1>
+        
+        <div class="test-controls">
+            <button id="runTestsBtn" onclick="runTests()">🧪 Run All Tests</button>
+            <button id="clearOutputBtn" onclick="clearOutput()">🗑️ Clear Output</button>
+        </div>
+
+        <div id="status" class="status ready">
+            Ready to run tests. Click "Run All Tests" to begin.
+        </div>
+
+        <div id="testOutput"></div>
+    </div>
+
+    <!-- Include the required JavaScript files -->
+    <script src="js/task-model.js"></script>
+    <script src="js/storage-manager.js"></script>
+    <script src="js/task-manager.js"></script>
+    <script src="js/task-manager.test.js"></script>
+
+    <script>
+        let testSuite;
+        let originalConsoleLog;
+        let originalConsoleError;
+
+        function initializeTestSuite() {
+            testSuite = new TaskManagerTestSuite();
+        }
+
+        function setupConsoleCapture() {
+            const output = document.getElementById('testOutput');
+            
+            originalConsoleLog = console.log;
+            originalConsoleError = console.error;
+
+            console.log = function(...args) {
+                const message = args.join(' ');
+                output.textContent += message + '\n';
+                output.scrollTop = output.scrollHeight;
+                originalConsoleLog.apply(console, args);
+            };
+
+            console.error = function(...args) {
+                const message = args.join(' ');
+                output.textContent += message + '\n';
+                output.scrollTop = output.scrollHeight;
+                originalConsoleError.apply(console, args);
+            };
+        }
+
+        function restoreConsole() {
+            if (originalConsoleLog) {
+                console.log = originalConsoleLog;
+            }
+            if (originalConsoleError) {
+                console.error = originalConsoleError;
+            }
+        }
+
+        function updateStatus(message, className) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${className}`;
+        }
+
+        function runTests() {
+            const runBtn = document.getElementById('runTestsBtn');
+            const clearBtn = document.getElementById('clearOutputBtn');
+            
+            // Disable buttons during test run
+            runBtn.disabled = true;
+            clearBtn.disabled = true;
+            
+            updateStatus('Running tests...', 'running');
+            
+            // Clear previous output
+            document.getElementById('testOutput').textContent = '';
+            
+            // Setup console capture
+            setupConsoleCapture();
+            
+            try {
+                // Initialize and run tests
+                initializeTestSuite();
+                testSuite.runAllTests();
+                
+                // Get results and update status
+                const results = testSuite.testResults;
+                const passed = results.filter(r => r.status === 'PASS').length;
+                const failed = results.filter(r => r.status === 'FAIL').length;
+                const errors = results.filter(r => r.status === 'ERROR').length;
+                const total = results.length;
+                
+                if (failed === 0 && errors === 0) {
+                    updateStatus(`✅ All tests passed! (${passed}/${total})`, 'completed');
+                } else {
+                    updateStatus(`❌ Tests completed with issues. Passed: ${passed}, Failed: ${failed}, Errors: ${errors}`, 'completed');
+                }
+                
+            } catch (error) {
+                console.error('Test execution failed:', error);
+                updateStatus('❌ Test execution failed. Check console for details.', 'completed');
+            } finally {
+                // Restore console and re-enable buttons
+                restoreConsole();
+                runBtn.disabled = false;
+                clearBtn.disabled = false;
+            }
+        }
+
+        function clearOutput() {
+            document.getElementById('testOutput').textContent = '';
+            updateStatus('Output cleared. Ready to run tests.', 'ready');
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStatus('Ready to run tests. Click "Run All Tests" to begin.', 'ready');
+        });
+    </script>
+</body>
+</html>
