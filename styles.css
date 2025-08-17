@@ -324,3 +324,48 @@ input:focus {
         border: 2px solid #000;
     }
 }
+/* Manual Post Text Styles */
+.manual-post-text {
+    background: #fff3cd !important;
+    color: #856404 !important;
+    border: 1px solid #ffeaa7 !important;
+    max-width: none;
+}
+
+.manual-post-header {
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.manual-post-content {
+    background: #f8f9fa;
+    padding: 0.75rem;
+    border-radius: 4px;
+    border: 1px solid #dee2e6;
+    font-family: 'Courier New', monospace;
+    font-size: 0.875rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+    margin-bottom: 0.75rem;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.copy-text-btn {
+    background: #6c757d !important;
+    color: white !important;
+    border: none !important;
+    padding: 0.375rem 0.75rem !important;
+    font-size: 0.8rem !important;
+    margin: 0 !important;
+}
+
+.copy-text-btn:hover {
+    background: #5a6268 !important;
+}
+
+.copy-text-btn:focus {
+    outline: 2px solid #6c757d;
+    outline-offset: 2px;
+}

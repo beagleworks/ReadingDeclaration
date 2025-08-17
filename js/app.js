@@ -124,12 +124,8 @@ class ReadingDeclarationApp {
             if (shareResult.success) {
                 this.showMessage('読書宣言をシェアしました！', 'success');
             } else {
-                this.showMessage('シェアに失敗しました。手動で投稿してください。', 'error');
-                // クリップボードにコピーを試行
-                const copied = await this.shareManager.copyToClipboard(shareResult.text);
-                if (copied) {
-                    this.showMessage('投稿内容をクリップボードにコピーしました', 'info');
-                }
+                // エラータイプに応じたメッセージを表示
+                this.handleShareError(shareResult, '読書宣言');
             }
 
             // フォームをリセット
@@ -273,12 +269,8 @@ class ReadingDeclarationApp {
             if (shareResult.success) {
                 this.showMessage('読了報告をシェアしました！', 'success');
             } else {
-                this.showMessage('シェアに失敗しました。手動で投稿してください。', 'error');
-                // クリップボードにコピーを試行
-                const copied = await this.shareManager.copyToClipboard(shareResult.text);
-                if (copied) {
-                    this.showMessage('投稿内容をクリップボードにコピーしました', 'info');
-                }
+                // エラータイプに応じたメッセージを表示
+                this.handleShareError(shareResult, '読了報告');
             }
 
             // タスクリストを更新
@@ -341,6 +333,104 @@ class ReadingDeclarationApp {
                 messageElement.parentNode.removeChild(messageElement);
             }
         }, 5000);
+    }
+
+    /**
+     * シェアエラーの処理
+     * @param {Object} shareResult - シェア結果オブジェクト
+     * @param {string} shareType - シェアタイプ（'読書宣言' または '読了報告'）
+     */
+    handleShareError(shareResult, shareType) {
+        const { errorType, error, manualOption } = shareResult;
+        
+        switch (errorType) {
+            case 'POPUP_BLOCKED':
+                this.showMessage(
+                    'ポップアップがブロックされました。ブラウザの設定でポップアップを許可するか、手動で投稿してください。',
+                    'error'
+                );
+                break;
+                
+            case 'URL_GENERATION_ERROR':
+                this.showMessage(
+                    `${shareType}のURL生成に失敗しました。手動で投稿してください。`,
+                    'error'
+                );
+                break;
+                
+            case 'CRITICAL_ERROR':
+                this.showMessage(
+                    `${shareType}のシェアに失敗しました。手動で投稿してください。`,
+                    'error'
+                );
+                break;
+                
+            default:
+                this.showMessage(
+                    `${shareType}のシェアに失敗しました。手動で投稿してください。`,
+                    'error'
+                );
+        }
+        
+        // マニュアル投稿オプションがある場合の追加メッセージ
+        if (manualOption) {
+            if (manualOption.success) {
+                this.showMessage(manualOption.message, 'info');
+                
+                // テキストが表示できる場合は表示
+                if (manualOption.text && !manualOption.copied) {
+                    this.showManualPostText(manualOption.text);
+                }
+            } else {
+                this.showMessage(manualOption.message, 'info');
+                this.showManualPostText(manualOption.text);
+            }
+        }
+    }
+
+    /**
+     * 手動投稿用テキストを表示
+     * @param {string} text - 表示するテキスト
+     */
+    showManualPostText(text) {
+        if (!this.elements.messageContainer) return;
+
+        const textElement = document.createElement('div');
+        textElement.className = 'message manual-post-text';
+        textElement.innerHTML = `
+            <div class="manual-post-header">手動投稿用テキスト:</div>
+            <div class="manual-post-content">${this.escapeHtml(text)}</div>
+            <button class="btn btn-small copy-text-btn" onclick="app.copyManualText('${this.escapeHtml(text)}')">
+                📋 コピー
+            </button>
+        `;
+
+        this.elements.messageContainer.appendChild(textElement);
+
+        // 10秒後に自動削除
+        setTimeout(() => {
+            if (textElement.parentNode) {
+                textElement.parentNode.removeChild(textElement);
+            }
+        }, 10000);
+    }
+
+    /**
+     * 手動投稿テキストをコピー
+     * @param {string} text - コピーするテキスト
+     */
+    async copyManualText(text) {
+        try {
+            const copied = await this.shareManager.copyToClipboard(text);
+            if (copied) {
+                this.showMessage('テキストをクリップボードにコピーしました', 'success');
+            } else {
+                this.showMessage('コピーに失敗しました', 'error');
+            }
+        } catch (error) {
+            console.error('手動テキストコピーエラー:', error);
+            this.showMessage('コピーに失敗しました', 'error');
+        }
     }
 
     /**
