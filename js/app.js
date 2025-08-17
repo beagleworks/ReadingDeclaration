@@ -134,6 +134,9 @@ class ReadingDeclarationApp {
             // タスクリストを更新
             this.displayTasks();
 
+            // フォーカスを書籍タイトル入力フィールドに戻す
+            this.elements.bookTitleInput.focus();
+
         } catch (error) {
             console.error('フォーム送信エラー:', error);
             this.showMessage('エラーが発生しました', 'error');
@@ -149,10 +152,13 @@ class ReadingDeclarationApp {
         
         if (value.length === 0) {
             input.setCustomValidity('書籍タイトルは必須です');
+            input.setAttribute('aria-invalid', 'true');
         } else if (value.length > 100) {
             input.setCustomValidity('書籍タイトルは100文字以内で入力してください');
+            input.setAttribute('aria-invalid', 'true');
         } else {
             input.setCustomValidity('');
+            input.setAttribute('aria-invalid', 'false');
         }
     }
 
@@ -221,22 +227,32 @@ class ReadingDeclarationApp {
         const completedDate = task.completedAt ? new Date(task.completedAt).toLocaleDateString('ja-JP') : '';
 
         return `
-            <div class="task-item ${isCompleted ? 'completed' : ''}" data-task-id="${task.id}">
+            <div class="task-item ${isCompleted ? 'completed' : ''}" 
+                 data-task-id="${task.id}"
+                 role="article"
+                 aria-label="${this.escapeHtml(task.bookTitle)}の読書タスク"
+                 tabindex="0">
                 <div class="task-info">
-                    <h4>${this.escapeHtml(task.bookTitle)}</h4>
+                    <h4 id="task-title-${task.id}">${this.escapeHtml(task.bookTitle)}</h4>
                     ${task.author ? `<p class="author">著者: ${this.escapeHtml(task.author)}</p>` : ''}
                     <p class="date">
                         開始: ${createdDate}
                         ${completedDate ? ` | 完了: ${completedDate}` : ''}
                     </p>
                 </div>
-                <div class="task-actions">
+                <div class="task-actions" role="group" aria-labelledby="task-title-${task.id}">
                     ${!isCompleted ? `
-                        <button class="btn btn-success btn-small" onclick="app.completeTask('${task.id}')">
+                        <button class="btn btn-success btn-small" 
+                                onclick="app.completeTask('${task.id}')"
+                                aria-label="${this.escapeHtml(task.bookTitle)}の読了をシェア"
+                                tabindex="0">
                             ✅ 読了をシェア
                         </button>
                     ` : ''}
-                    <button class="btn btn-danger btn-small" onclick="app.deleteTask('${task.id}')">
+                    <button class="btn btn-danger btn-small" 
+                            onclick="app.deleteTask('${task.id}')"
+                            aria-label="${this.escapeHtml(task.bookTitle)}のタスクを削除"
+                            tabindex="0">
                         🗑️ 削除
                     </button>
                 </div>
@@ -276,6 +292,9 @@ class ReadingDeclarationApp {
             // タスクリストを更新
             this.displayTasks();
 
+            // フォーカスを適切な場所に移動
+            this.manageFocusAfterTaskUpdate();
+
         } catch (error) {
             console.error('タスク完了エラー:', error);
             this.showMessage('エラーが発生しました', 'error');
@@ -303,6 +322,9 @@ class ReadingDeclarationApp {
             if (deleted) {
                 this.showMessage('タスクを削除しました', 'success');
                 this.displayTasks();
+                
+                // フォーカスを適切な場所に移動
+                this.manageFocusAfterTaskUpdate();
             } else {
                 this.showMessage('タスクの削除に失敗しました', 'error');
             }
@@ -324,8 +346,33 @@ class ReadingDeclarationApp {
         const messageElement = document.createElement('div');
         messageElement.className = `message ${type}`;
         messageElement.textContent = message;
+        messageElement.setAttribute('role', 'alert');
+        messageElement.setAttribute('aria-live', 'polite');
+        messageElement.setAttribute('tabindex', '0');
 
+        // エラーメッセージの場合はより強い通知
+        if (type === 'error') {
+            messageElement.setAttribute('aria-live', 'assertive');
+        }
+
+        // 閉じるボタンを追加
+        const closeButton = document.createElement('button');
+        closeButton.className = 'message-close';
+        closeButton.innerHTML = '×';
+        closeButton.setAttribute('aria-label', 'メッセージを閉じる');
+        closeButton.onclick = () => {
+            if (messageElement.parentNode) {
+                messageElement.parentNode.removeChild(messageElement);
+            }
+        };
+        
+        messageElement.appendChild(closeButton);
         this.elements.messageContainer.appendChild(messageElement);
+
+        // フォーカスをメッセージに移動（エラーの場合）
+        if (type === 'error') {
+            messageElement.focus();
+        }
 
         // 5秒後に自動削除
         setTimeout(() => {
@@ -397,15 +444,36 @@ class ReadingDeclarationApp {
 
         const textElement = document.createElement('div');
         textElement.className = 'message manual-post-text';
+        textElement.setAttribute('role', 'region');
+        textElement.setAttribute('aria-label', '手動投稿用テキスト');
+        textElement.setAttribute('tabindex', '0');
+        
+        const escapedText = this.escapeHtml(text);
         textElement.innerHTML = `
             <div class="manual-post-header">手動投稿用テキスト:</div>
-            <div class="manual-post-content">${this.escapeHtml(text)}</div>
-            <button class="btn btn-small copy-text-btn" onclick="app.copyManualText('${this.escapeHtml(text)}')">
+            <div class="manual-post-content" 
+                 role="textbox" 
+                 aria-readonly="true"
+                 aria-label="投稿用テキスト"
+                 tabindex="0">${escapedText}</div>
+            <button class="btn btn-small copy-text-btn" 
+                    onclick="app.copyManualText('${escapedText}')"
+                    aria-label="投稿用テキストをクリップボードにコピー"
+                    tabindex="0">
                 📋 コピー
+            </button>
+            <button class="message-close" 
+                    onclick="this.parentElement.remove()"
+                    aria-label="手動投稿テキストを閉じる"
+                    tabindex="0">
+                ×
             </button>
         `;
 
         this.elements.messageContainer.appendChild(textElement);
+
+        // フォーカスをテキスト要素に移動
+        textElement.focus();
 
         // 10秒後に自動削除
         setTimeout(() => {
@@ -444,6 +512,69 @@ class ReadingDeclarationApp {
                 document.activeElement === this.elements.authorInput) {
                 e.preventDefault();
                 this.handleFormSubmit();
+            }
+        }
+
+        // Escapeキーでメッセージを閉じる
+        if (e.key === 'Escape') {
+            this.clearMessages();
+        }
+
+        // タスクリスト内でのキーボードナビゲーション
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+            this.handleTaskListNavigation(e);
+        }
+
+        // Enterキーまたはスペースキーでボタンを実行
+        if ((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('btn')) {
+            e.preventDefault();
+            e.target.click();
+        }
+    }
+
+    /**
+     * タスクリスト内でのキーボードナビゲーション
+     * @param {KeyboardEvent} e - キーボードイベント
+     */
+    handleTaskListNavigation(e) {
+        const focusableElements = document.querySelectorAll('.task-item .btn, .task-item');
+        const currentIndex = Array.from(focusableElements).indexOf(document.activeElement);
+        
+        if (currentIndex === -1) return;
+
+        e.preventDefault();
+        
+        let nextIndex;
+        if (e.key === 'ArrowDown') {
+            nextIndex = (currentIndex + 1) % focusableElements.length;
+        } else {
+            nextIndex = (currentIndex - 1 + focusableElements.length) % focusableElements.length;
+        }
+        
+        focusableElements[nextIndex].focus();
+    }
+
+    /**
+     * 全てのメッセージをクリア
+     */
+    clearMessages() {
+        if (this.elements.messageContainer) {
+            this.elements.messageContainer.innerHTML = '';
+        }
+    }
+
+    /**
+     * タスク更新後のフォーカス管理
+     */
+    manageFocusAfterTaskUpdate() {
+        // 最初のアクティブなタスクまたは書籍タイトル入力フィールドにフォーカス
+        const firstActiveTask = document.querySelector('.task-item:not(.completed)');
+        if (firstActiveTask) {
+            firstActiveTask.focus();
+        } else {
+            // アクティブなタスクがない場合は入力フィールドにフォーカス
+            if (this.elements.bookTitleInput) {
+                this.elements.bookTitleInput.focus();
             }
         }
     }

@@ -26,17 +26,18 @@
     <link rel="icon" type="image/x-icon" href="favicon.ico">
 </head>
 <body>
+    <a href="#main-content" class="skip-link">メインコンテンツにスキップ</a>
     <div id="app">
         <header class="app-header">
             <h1>📚 読書宣言アプリ</h1>
             <p class="app-description">読書の開始と完了をXにシェアしよう</p>
         </header>
 
-        <main class="main-content">
+        <main id="main-content" class="main-content">
             <!-- Book Form Section -->
             <section class="book-form-section">
                 <h2>新しい読書宣言</h2>
-                <form id="book-form" class="book-form">
+                <form id="book-form" class="book-form" role="form" aria-label="新しい読書宣言フォーム">
                     <div class="form-group">
                         <label for="book-title">書籍タイトル *</label>
                         <input 
@@ -46,7 +47,10 @@
                             required 
                             placeholder="読む本のタイトルを入力してください"
                             maxlength="100"
+                            aria-describedby="book-title-help"
+                            aria-invalid="false"
                         >
+                        <div id="book-title-help" class="sr-only">書籍タイトルは必須項目です。最大100文字まで入力できます。</div>
                     </div>
                     
                     <div class="form-group">
@@ -57,12 +61,15 @@
                             name="author" 
                             placeholder="著者名を入力してください（任意）"
                             maxlength="50"
+                            aria-describedby="author-help"
                         >
+                        <div id="author-help" class="sr-only">著者名は任意項目です。最大50文字まで入力できます。</div>
                     </div>
                     
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" class="btn btn-primary" aria-describedby="submit-help">
                         📢 読書宣言をシェア
                     </button>
+                    <div id="submit-help" class="sr-only">Ctrl+Enterキーでも送信できます。</div>
                 </form>
             </section>
 
@@ -72,16 +79,24 @@
                 
                 <!-- Active Tasks -->
                 <div class="task-category">
-                    <h3>📖 読書中</h3>
-                    <div id="active-tasks" class="task-list">
+                    <h3 id="active-tasks-heading">📖 読書中</h3>
+                    <div id="active-tasks" 
+                         class="task-list" 
+                         role="region" 
+                         aria-labelledby="active-tasks-heading"
+                         aria-live="polite">
                         <!-- Active tasks will be dynamically inserted here -->
                     </div>
                 </div>
                 
                 <!-- Completed Tasks -->
                 <div class="task-category">
-                    <h3>✅ 読了済み</h3>
-                    <div id="completed-tasks" class="task-list">
+                    <h3 id="completed-tasks-heading">✅ 読了済み</h3>
+                    <div id="completed-tasks" 
+                         class="task-list" 
+                         role="region" 
+                         aria-labelledby="completed-tasks-heading"
+                         aria-live="polite">
                         <!-- Completed tasks will be dynamically inserted here -->
                     </div>
                 </div>
