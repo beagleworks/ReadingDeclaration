@@ -119,7 +119,7 @@ python -m http.server 8000
 npx http-server
 
 # ブラウザで以下にアクセス
-http://localhost:8000/integration-test-runner.html
+http://localhost:8000/tests/integration-test-runner.html
 ```
 
 ### 2. テスト手順
