@@ -103,7 +103,8 @@ class TaskManagerTestSuite {
     // Setup and teardown
     setUp() {
         this.mockStorage = new MockStorageManager();
-        this.taskManager = new TaskManager(this.mockStorage);
+        // テスト中はロギングを無効にする
+        this.taskManager = new TaskManager(this.mockStorage, { enableLogging: false });
         this.mockStorage.setFailMode(false);
     }
 
@@ -323,7 +324,7 @@ class TaskManagerTestSuite {
         
         // Test storage load failure
         this.mockStorage.setFailMode(true);
-        const taskManagerWithFailure = new TaskManager(this.mockStorage);
+        const taskManagerWithFailure = new TaskManager(this.mockStorage, { enableLogging: false });
         const tasks = taskManagerWithFailure.getAllTasks();
         this.assertArrayLength(tasks, 0, 'Should handle storage load failure gracefully');
 
@@ -360,7 +361,7 @@ class TaskManagerTestSuite {
             this.tearDown();
         });
 
-        this.printSummary();
+        return this.printSummary();
     }
 
     // Print test summary
@@ -390,7 +391,8 @@ class TaskManagerTestSuite {
     }
 }
 
-// Export for use in browser or Node.js
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { TaskManagerTestSuite, MockStorageManager };
+// Node.jsの`eval`スコープの問題を回避するため、クラスをグローバルオブジェクトに明示的に添付します。
+if (typeof global !== 'undefined') {
+    global.TaskManagerTestSuite = TaskManagerTestSuite;
+    global.MockStorageManager = MockStorageManager;
 }

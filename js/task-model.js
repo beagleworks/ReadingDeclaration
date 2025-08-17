@@ -205,3 +205,9 @@ class TaskValidator {
         };
     }
 }
+
+// Node.js環境でグローバルに公開
+if (typeof global !== 'undefined') {
+    global.Task = Task;
+    global.TaskValidator = TaskValidator;
+}
