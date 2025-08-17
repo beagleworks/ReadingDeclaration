@@ -47,21 +47,31 @@
 ## ファイル構成
 
 ```
-reading-declaration-app/
+.
+├── LICENSE                    # MITライセンス
+├── README.md                  # このファイル
 ├── index.html                 # メインHTMLファイル
 ├── styles.css                 # スタイルシート
-├── js/
-│   ├── app.js                 # メインアプリケーション
-│   ├── task-manager.js        # タスク管理クラス
-│   ├── task-model.js          # タスクデータモデル
-│   ├── storage-manager.js     # ローカルストレージ管理
-│   ├── share-manager.js       # Xシェア機能
-│   ├── notification-manager.js # 通知・エラーハンドリング
+├── js/                        # JavaScriptファイル
+│   ├── app.js                 # メインアプリケーションロジック
 │   ├── input-validator.js     # 入力バリデーション
-│   └── *.test.js             # ユニットテストファイル
-├── test-runner.html           # テスト実行用HTML
-├── integration-test-runner.html # 統合テスト実行用HTML
-└── README.md                  # このファイル
+│   ├── notification-manager.js # 通知・エラーハンドリング
+│   ├── share-manager.js       # Xシェア機能
+│   ├── storage-manager.js     # ローカルストレージ管理
+│   ├── task-manager.js        # タスク管理
+│   └── task-model.js          # タスクデータモデル
+└── tests/                     # テストファイル
+    ├── TEST-DOCUMENTATION.md  # テストに関するドキュメント
+    ├── browser-compatibility-tests.js # ブラウザ互換性テスト
+    ├── input-validator.test.js # 入力バリデーションのユニットテスト
+    ├── integration-test-runner.html # 統合テスト実行用HTML
+    ├── integration-tests.js   # 統合テスト
+    ├── run-tests.js           # テスト実行スクリプト
+    ├── simple-test.js         # シンプルなテスト
+    ├── task-manager.test.js   # タスクマネージャーのユニットテスト
+    ├── test-integration-node.js # Node.jsでの統合テスト
+    ├── test-runner.html       # ユニットテスト実行用HTML
+    └── test-validation.html   # バリデーションテスト用HTML
 ```
 
 ## データモデル
