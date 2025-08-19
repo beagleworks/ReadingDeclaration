@@ -37,7 +37,7 @@ class InputValidator {
         
         // 許可される文字パターン
         this.allowedPatterns = {
-            bookTitle: /^[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF\u3400-\u4DBFa-zA-Z0-9\s\-\.\,\!\?\:\;\(\)\[\]\{\}「」『』〈〉《》【】〔〕・～ー]+$/,
+            bookTitle: /^[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF\u3400-\u4DBFa-zA-Z0-9\s\-\.\,\!\?\:\;\(\)\[\]\{\}「」『』〈〉《》【】〔〕・～ー！？」（）]+$/,
             author: /^[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF\u3400-\u4DBFa-zA-Z0-9\s\-\.\,]+$/
         };
     }

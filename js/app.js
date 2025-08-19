@@ -89,15 +89,6 @@ class ReadingDeclarationApp {
         // 入力フィールドのリアルタイムバリデーション
         this.setupInputValidation();
 
-        // ページ離脱前の確認（アクティブなタスクがある場合）
-        window.addEventListener('beforeunload', (e) => {
-            const activeTasks = this.taskManager.getActiveTasks();
-            if (activeTasks.length > 0) {
-                e.preventDefault();
-                e.returnValue = '読書中のタスクがあります。本当にページを離れますか？';
-            }
-        });
-
         // キーボードショートカット
         document.addEventListener('keydown', (e) => {
             this.handleKeyboardShortcuts(e);
