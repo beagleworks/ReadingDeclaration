@@ -449,3 +449,8 @@ class InputValidator {
         return sanitized;
     }
 }
+
+// Node.js環境でグローバルに公開
+if (typeof global !== 'undefined') {
+    global.InputValidator = InputValidator;
+}

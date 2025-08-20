@@ -93,6 +93,31 @@ class ReadingDeclarationApp {
         document.addEventListener('keydown', (e) => {
             this.handleKeyboardShortcuts(e);
         });
+
+        // タスクリストのイベントデリゲーション
+        const taskListClickHandler = (event) => {
+            const button = event.target.closest('button[data-action]');
+            if (!button) return;
+
+            const taskItem = button.closest('.task-item[data-task-id]');
+            if (!taskItem) return;
+
+            const taskId = taskItem.dataset.taskId;
+            const action = button.dataset.action;
+
+            if (action === 'complete') {
+                this.completeTask(taskId);
+            } else if (action === 'delete') {
+                this.deleteTask(taskId);
+            }
+        };
+
+        if (this.elements.activeTasksList) {
+            this.elements.activeTasksList.addEventListener('click', taskListClickHandler);
+        }
+        if (this.elements.completedTasksList) {
+            this.elements.completedTasksList.addEventListener('click', taskListClickHandler);
+        }
     }
 
     /**
@@ -358,14 +383,14 @@ class ReadingDeclarationApp {
                 <div class="task-actions" role="group" aria-labelledby="task-title-${sanitizedId}">
                     ${!isCompleted ? `
                         <button class="btn btn-success btn-small" 
-                                onclick="app.completeTask('${sanitizedId}')"
+                                data-action="complete"
                                 aria-label="${sanitizedTitle}の読了をシェア"
                                 tabindex="0">
                             ✅ 読了をシェア
                         </button>
                     ` : ''}
                     <button class="btn btn-danger btn-small" 
-                            onclick="app.deleteTask('${sanitizedId}')"
+                            data-action="delete"
                             aria-label="${sanitizedTitle}のタスクを削除"
                             tabindex="0">
                         🗑️ 削除

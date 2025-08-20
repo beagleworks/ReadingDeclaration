@@ -275,7 +275,8 @@ class IntegrationTestSuite {
         this.assertContains(activeTasksContainer.innerHTML, '読了をシェア', 'Complete button should be displayed');
         
         // 5. 読了処理を実行
-        await window.app.completeTask(task.id);
+        const completeButtonSelector = `[data-task-id="${task.id}"] [data-action="complete"]`;
+        await this.simulateButtonClick(completeButtonSelector);
         
         // 6. タスクが完了状態になったか確認
         const completedTask = window.app.taskManager.getTask(task.id);
@@ -450,8 +451,15 @@ class IntegrationTestSuite {
         this.assert(!completedTaskHtml.includes('読了をシェア'), 'Completed task should not have complete button');
         
         // 4. タスク削除のテスト
-        window.app.deleteTask(task.id);
-        window.app.displayTasks();
+        // confirmダイアログが自動的にtrueを返すようにモックする
+        const originalConfirm = window.confirm;
+        window.confirm = () => true;
+        this.cleanup.push(() => { window.confirm = originalConfirm; });
+
+        const deleteButtonSelector = `[data-task-id="${task.id}"] [data-action="delete"]`;
+        await this.simulateButtonClick(deleteButtonSelector);
+
+        // UIの更新を待機
         await this.wait(100);
         
         const updatedCompletedTasksContainer = document.getElementById('completed-tasks');

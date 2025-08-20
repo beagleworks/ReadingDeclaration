@@ -98,7 +98,7 @@ try {
     ];
     
     sourceFiles.forEach(file => {
-        const filePath = path.join(__dirname, file);
+        const filePath = path.join(__dirname, '..', file);
         if (fs.existsSync(filePath)) {
             console.log(`✅ Loading ${file}`);
             eval(fs.readFileSync(filePath, 'utf8'));

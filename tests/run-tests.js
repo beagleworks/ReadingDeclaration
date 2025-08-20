@@ -42,10 +42,10 @@ global.sessionStorage = {
 
 try {
     // Load the JavaScript files in order
-    const taskModelCode = fs.readFileSync(path.join(__dirname, 'js/task-model.js'), 'utf8');
-    const storageManagerCode = fs.readFileSync(path.join(__dirname, 'js/storage-manager.js'), 'utf8');
-    const taskManagerCode = fs.readFileSync(path.join(__dirname, 'js/task-manager.js'), 'utf8');
-    const testCode = fs.readFileSync(path.join(__dirname, 'js/task-manager.test.js'), 'utf8');
+    const taskModelCode = fs.readFileSync(path.join(__dirname, '../js/task-model.js'), 'utf8');
+    const storageManagerCode = fs.readFileSync(path.join(__dirname, '../js/storage-manager.js'), 'utf8');
+    const taskManagerCode = fs.readFileSync(path.join(__dirname, '../js/task-manager.js'), 'utf8');
+    const testCode = fs.readFileSync(path.join(__dirname, 'task-manager.test.js'), 'utf8');
 
     // Execute the code in global scope
     eval(taskModelCode);
