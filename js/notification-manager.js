@@ -562,3 +562,8 @@ class NotificationManager {
         return stats;
     }
 }
+
+// Node.js環境でグローバルに公開
+if (typeof global !== 'undefined') {
+    global.NotificationManager = NotificationManager;
+}
