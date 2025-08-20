@@ -284,8 +284,6 @@ class InputValidator {
         const validate = () => {
             const result = this.validateField(fieldName, input.value);
             
-            // UI更新
-            this.updateFieldUI(input, result);
             
             // コールバック実行
             if (callback) {
