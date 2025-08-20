@@ -20,6 +20,9 @@ class ReadingDeclarationApp {
             author: { isValid: true, errors: [] } // 任意項目なので初期状態は有効
         };
         
+        // ユーザーが操作したフィールドを追跡
+        this.interactedFields = new Set();
+
         // 初期化
         this.init();
     }
@@ -124,29 +127,39 @@ class ReadingDeclarationApp {
      * 入力バリデーションの設定
      */
     setupInputValidation() {
-        // 書籍タイトルのバリデーション
-        if (this.elements.bookTitleInput) {
-            this.inputValidator.setupRealtimeValidation(
-                this.elements.bookTitleInput,
-                (fieldName, result) => {
-                    this.validationState[fieldName] = result;
-                    this.updateCharacterCounter('bookTitle');
-                    this.updateSubmitButton();
-                }
-            );
-        }
+        const setupFieldValidation = (inputElement, fieldName) => {
+            if (!inputElement) return;
 
-        // 著者名のバリデーション
-        if (this.elements.authorInput) {
+            // ユーザーの初回インタラクションを一度だけ捕捉
+            const handleFirstInteraction = () => {
+                this.interactedFields.add(fieldName);
+                // 初回インタラクション後は、イベントに応じてUIが更新される
+            };
+
+            inputElement.addEventListener('input', handleFirstInteraction, { once: true });
+            inputElement.addEventListener('blur', handleFirstInteraction, { once: true });
+
+            // リアルタイムバリデーションを設定
             this.inputValidator.setupRealtimeValidation(
-                this.elements.authorInput,
-                (fieldName, result) => {
-                    this.validationState[fieldName] = result;
-                    this.updateCharacterCounter('author');
+                inputElement,
+                (name, result) => {
+                    // バリデーション状態を更新
+                    this.validationState[name] = result;
+
+                    // 関連コンポーネントを更新
+                    this.updateCharacterCounter(name);
                     this.updateSubmitButton();
+
+                    // ユーザーが操作したフィールドのみUIを更新
+                    if (this.interactedFields.has(name)) {
+                        this.inputValidator.updateFieldUI(inputElement, result);
+                    }
                 }
             );
-        }
+        };
+
+        setupFieldValidation(this.elements.bookTitleInput, 'bookTitle');
+        setupFieldValidation(this.elements.authorInput, 'author');
     }
 
     /**
