@@ -143,6 +143,12 @@ class ReadingDeclarationApp {
                 // 実際に文字が入ったタイミングでインタラクション確定
                 if (inputElement.value.length > 0) {
                     markInteracted();
+                } else {
+                    // 全て消去されたら「未操作」状態に戻し UI をクリア
+                    if (this.interactedFields.has(fieldName)) {
+                        this.interactedFields.delete(fieldName);
+                    }
+                    this.clearFieldValidationUI(inputElement);
                 }
             });
             inputElement.addEventListener('paste', () => {
@@ -185,6 +191,21 @@ class ReadingDeclarationApp {
 
         setupFieldValidation(this.elements.bookTitleInput, 'bookTitle');
         setupFieldValidation(this.elements.authorInput, 'author');
+    }
+
+    /**
+     * 単一フィールドのバリデーションUIをクリア
+     * @param {HTMLElement} inputElement 
+     */
+    clearFieldValidationUI(inputElement) {
+        const formGroup = inputElement.closest('.form-group');
+        inputElement.classList.remove('valid', 'error');
+        inputElement.setAttribute('aria-invalid', 'false');
+        if (formGroup) {
+            formGroup.classList.remove('has-success', 'has-error');
+            const existingError = formGroup.querySelector('.field-error');
+            if (existingError) existingError.remove();
+        }
     }
 
     /**
