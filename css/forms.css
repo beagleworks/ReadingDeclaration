@@ -1,0 +1,239 @@
+/* Form Styles */
+.book-form {
+    display: grid;
+    gap: var(--spacing-lg);
+}
+
+.form-group {
+    display: grid;
+    gap: var(--spacing-sm);
+}
+
+.form-group label {
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.form-group input {
+    padding: var(--spacing-md);
+    border: 2px solid var(--medium-gray);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-base);
+    transition: all var(--transition-normal);
+    background: var(--bg-secondary);
+    font-family: inherit;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15), var(--shadow-md);
+    transform: translateY(-2px);
+    background: var(--white);
+}
+
+.form-group input:hover:not(:focus) {
+    border-color: var(--primary-dark);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+
+.form-group input::placeholder {
+    color: var(--text-muted);
+    opacity: 0.7;
+    transition: opacity var(--transition-normal);
+}
+
+.form-group input:focus::placeholder {
+    opacity: 0.5;
+    transform: translateY(-2px);
+}
+
+/* Form Group Enhancements */
+.form-group {
+    position: relative;
+}
+
+.form-group label {
+    transition: color var(--transition-normal);
+}
+
+.form-group:focus-within label {
+    color: var(--primary-color);
+}
+
+/* Validation States */
+.form-group.has-success label {
+    color: var(--success-color);
+}
+
+.form-group.has-error label {
+    color: var(--danger-color);
+}
+
+.form-group input.valid {
+    border-color: var(--success-color);
+    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%2328a745" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20,6 9,17 4,12"></polyline></svg>');
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+    padding-right: 40px;
+}
+
+.form-group input.error {
+    border-color: var(--danger-color);
+    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23dc3545" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>');
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+    padding-right: 40px;
+}
+
+.form-group input.valid:focus {
+    box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.15), var(--shadow-md);
+}
+
+.form-group input.error:focus {
+    box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.15), var(--shadow-md);
+}
+
+/* Field Error Messages */
+.field-error {
+    color: var(--danger-color);
+    font-size: var(--font-size-sm);
+    margin-top: var(--spacing-xs);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    animation: fadeInUp 0.3s ease-out;
+}
+
+.field-error::before {
+    content: '⚠️';
+    font-size: var(--font-size-xs);
+}
+
+/* Form Validation Summary */
+.validation-summary {
+    background: rgba(248, 215, 218, 0.95);
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+    border-left: 4px solid var(--danger-color);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-lg);
+    animation: fadeInUp 0.3s ease-out;
+}
+
+.validation-summary h4 {
+    margin: 0 0 var(--spacing-sm) 0;
+    font-size: var(--font-size-base);
+    font-weight: 600;
+}
+
+.validation-summary ul {
+    margin: 0;
+    padding-left: var(--spacing-lg);
+}
+
+.validation-summary li {
+    margin-bottom: var(--spacing-xs);
+}
+
+/* Real-time Validation Indicators */
+.form-group input:not(:placeholder-shown):valid {
+    border-color: var(--success-color);
+}
+
+.form-group input:not(:placeholder-shown):invalid {
+    border-color: var(--danger-color);
+}
+
+/* Loading State for Validation */
+.form-group.validating input {
+    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%236c757d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="m12 1 0 6m0 6 0 6m11-7-6 0m-6 0-6 0"></path></svg>');
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+    padding-right: 40px;
+}
+
+.form-group.validating input::after {
+    animation: spin 1s linear infinite;
+}
+
+/* Security Warning Styles */
+.security-warning {
+    background: rgba(255, 243, 205, 0.95);
+    color: #856404;
+    border: 1px solid #ffeaa7;
+    border-left: 4px solid var(--warning-color);
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    margin-top: var(--spacing-xs);
+    font-size: var(--font-size-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.security-warning::before {
+    content: '🔒';
+    font-size: var(--font-size-sm);
+}
+
+/* Character Counter */
+.character-counter {
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    text-align: right;
+    margin-top: var(--spacing-xs);
+    transition: color var(--transition-normal);
+}
+
+.character-counter.warning {
+    color: var(--warning-color);
+}
+
+.character-counter.error {
+    color: var(--danger-color);
+}
+
+/* Form Submission States */
+.book-form.submitting {
+    pointer-events: none;
+    opacity: 0.8;
+}
+
+.book-form.submitting .btn {
+    animation: pulse 1s infinite;
+}
+
+/* Form Field Floating Labels Effect */
+.form-group {
+    position: relative;
+}
+
+.form-group.floating label {
+    position: absolute;
+    top: 50%;
+    left: var(--spacing-md);
+    transform: translateY(-50%);
+    background: var(--bg-secondary);
+    padding: 0 var(--spacing-xs);
+    transition: all var(--transition-normal);
+    pointer-events: none;
+    color: var(--text-muted);
+}
+
+.form-group.floating input:focus + label,
+.form-group.floating input:not(:placeholder-shown) + label {
+    top: 0;
+    transform: translateY(-50%);
+    font-size: var(--font-size-xs);
+    color: var(--primary-color);
+    font-weight: 600;
+}
