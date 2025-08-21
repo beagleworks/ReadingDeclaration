@@ -66,12 +66,12 @@ class ShareManager {
         // 文字数制限チェック
         if (text.length > this.maxTweetLength) {
             // 長すぎる場合は短縮
-            const baseText = `📖 読了報告\n\n「${sanitizedTitle}」\n\n読み終わりました！✨\n\n#読書記録`;
+            const baseText = `📖 読了報告\n\n「${sanitizedTitle}」\n\n読み終わりました！✨\n\n#読書宣言`;
             if (baseText.length > this.maxTweetLength) {
                 // タイトルも短縮が必要
                 const availableLength = this.maxTweetLength - '📖 読了報告\n\n「」\n\n読み終わりました！✨\n\n#読書記録'.length;
                 const truncatedTitle = sanitizedTitle.substring(0, availableLength - 3) + '...';
-                text = `📖 読了報告\n\n「${truncatedTitle}」\n\n読み終わりました！✨\n\n#読書記録`;
+                text = `📖 読了報告\n\n「${truncatedTitle}」\n\n読み終わりました！✨\n\n#読書宣言`;
             } else {
                 text = baseText;
             }
