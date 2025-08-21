@@ -130,14 +130,39 @@ class ReadingDeclarationApp {
         const setupFieldValidation = (inputElement, fieldName) => {
             if (!inputElement) return;
 
-            // ユーザーの初回インタラクションを一度だけ捕捉
-            const handleFirstInteraction = () => {
-                this.interactedFields.add(fieldName);
-                // 初回インタラクション後は、イベントに応じてUIが更新される
+            // 初回インタラクション: 実際に値を入力した/貼り付けた場合のみ即時確定。
+            // blur だけでは（未入力なら）インタラクション扱いにしないことで
+            // 他ボタン（読了/削除）クリック時のフォーカス移動でエラー表示が出るのを防ぐ。
+            const markInteracted = () => {
+                if (!this.interactedFields.has(fieldName)) {
+                    this.interactedFields.add(fieldName);
+                }
             };
 
-            inputElement.addEventListener('input', handleFirstInteraction, { once: true });
-            inputElement.addEventListener('blur', handleFirstInteraction, { once: true });
+            inputElement.addEventListener('input', () => {
+                // 実際に文字が入ったタイミングでインタラクション確定
+                if (inputElement.value.length > 0) {
+                    markInteracted();
+                }
+            });
+            inputElement.addEventListener('paste', () => {
+                setTimeout(() => {
+                    if (inputElement.value.length > 0) {
+                        markInteracted();
+                    }
+                }, 0);
+            });
+            inputElement.addEventListener('blur', () => {
+                // フィールドを離れる時点で内容が入っていればインタラクション扱い
+                if (inputElement.value.trim().length > 0) {
+                    markInteracted();
+                    // 既に検証済み結果があればUI反映（ユーザー入力があったケース）
+                    const result = this.validationState[fieldName];
+                    if (result) {
+                        this.inputValidator.updateFieldUI(inputElement, result);
+                    }
+                }
+            });
 
             // リアルタイムバリデーションを設定
             this.inputValidator.setupRealtimeValidation(
@@ -150,7 +175,7 @@ class ReadingDeclarationApp {
                     this.updateCharacterCounter(name);
                     this.updateSubmitButton();
 
-                    // ユーザーが操作したフィールドのみUIを更新
+                    // ユーザーが操作した（入力した）フィールドのみUIを更新
                     if (this.interactedFields.has(name)) {
                         this.inputValidator.updateFieldUI(inputElement, result);
                     }

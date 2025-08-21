@@ -218,22 +218,6 @@ section h2::after {
     box-shadow: var(--shadow-sm);
 }
 
-/* NOTE: 初期表示時に required な空フィールドへ即時エラースタイルが出ないよう
-    汎用 :invalid ルールは削除し、下部の
-    .form-group input:not(:placeholder-shown):invalid に統一する。 
-
-    .form-group input:invalid {
-        border-color: var(--danger-color);
-        animation: shake 0.5s ease-in-out;
-    }
-
-    .form-group input:invalid:focus {
-        box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.15), var(--shadow-md);
-    }
-
-*/
-
-
 .form-group input::placeholder {
     color: var(--text-muted);
     opacity: 0.7;
