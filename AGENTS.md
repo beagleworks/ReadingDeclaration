@@ -1,5 +1,8 @@
 # AGENTS.md
 
+## Specification Files
+.kiro/specs/reading-declaration-app
+
 ## Top Page
 index.html
 
