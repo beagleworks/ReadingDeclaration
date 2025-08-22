@@ -28,6 +28,7 @@
     transition: all var(--transition-normal);
     position: relative;
     overflow: hidden;
+    animation: fadeInScale 0.5s ease-out;
 }
 
 .task-item::before {
@@ -110,10 +111,6 @@
     flex-wrap: wrap;
     position: relative;
     z-index: 1;
-}
-
-.task-item {
-    animation: fadeInScale 0.5s ease-out;
 }
 
 .task-item:nth-child(even) {
