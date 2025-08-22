@@ -17,8 +17,6 @@
     font-family: inherit;
     text-transform: none;
     letter-spacing: 0.3px;
-    position: relative;
-    overflow: hidden;
 }
 
 .btn::before {
