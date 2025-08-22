@@ -113,13 +113,6 @@
     z-index: 1;
 }
 
-.task-item:nth-child(even) {
-    animation-delay: 0.1s;
-}
-
-.task-item:nth-child(odd) {
-    animation-delay: 0.05s;
-}
 
 /* Task Item Micro-Interactions */
 .task-item .task-info h4 {
