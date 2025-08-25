@@ -54,7 +54,17 @@ https://beagleworks.github.io/ReadingDeclaration/
 ├── LICENSE                    # MITライセンス
 ├── README.md                  # このファイル
 ├── index.html                 # メインHTMLファイル
-├── styles.css                 # スタイルシート
+├── css/                       # スタイルシート
+│   ├── accessibility.css      # アクセシビリティ関連
+│   ├── animations.css         # アニメーション
+│   ├── base.css               # 基本スタイル
+│   ├── buttons.css            # ボタン
+│   ├── forms.css              # フォーム
+│   ├── layout.css             # レイアウト
+│   ├── misc.css               # その他
+│   ├── notifications.css      # 通知
+│   ├── responsive.css         # レスポンシブ対応
+│   └── tasks.css              # タスクリスト
 ├── js/                        # JavaScriptファイル
 │   ├── app.js                 # メインアプリケーションロジック
 │   ├── input-validator.js     # 入力バリデーション
