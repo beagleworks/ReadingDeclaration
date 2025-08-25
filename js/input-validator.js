@@ -284,7 +284,6 @@ class InputValidator {
         const validate = () => {
             const result = this.validateField(fieldName, input.value);
             
-            
             // コールバック実行
             if (callback) {
                 callback(fieldName, result);
@@ -293,7 +292,7 @@ class InputValidator {
 
         // イベントリスナーを設定
         input.addEventListener('input', validate);
-        input.addEventListener('blur', validate);
+        // blur イベントは app.js で個別に制御するため削除
         input.addEventListener('paste', () => {
             // ペースト後に少し遅延してバリデーション
             setTimeout(validate, 10);

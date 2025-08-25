@@ -108,6 +108,10 @@ class ReadingDeclarationApp {
             const taskId = taskItem.dataset.taskId;
             const action = button.dataset.action;
 
+            // フォーカスの移動を防ぐためにフォーカスをボタンに維持
+            event.preventDefault();
+            button.focus();
+
             if (action === 'complete') {
                 this.completeTask(taskId);
             } else if (action === 'delete') {
@@ -130,27 +134,28 @@ class ReadingDeclarationApp {
         const setupFieldValidation = (inputElement, fieldName) => {
             if (!inputElement) return;
 
-            // 初回インタラクション: 実際に値を入力した/貼り付けた場合のみ即時確定。
-            // blur だけでは（未入力なら）インタラクション扱いにしないことで
-            // 他ボタン（読了/削除）クリック時のフォーカス移動でエラー表示が出るのを防ぐ。
+            // ユーザーが実際にフィールドに入力したかを追跡
             const markInteracted = () => {
                 if (!this.interactedFields.has(fieldName)) {
                     this.interactedFields.add(fieldName);
                 }
             };
 
+            // inputイベント：文字が入力されたタイミング
             inputElement.addEventListener('input', () => {
-                // 実際に文字が入ったタイミングでインタラクション確定
+                // 実際に文字が入力されたらインタラクション確定
                 if (inputElement.value.length > 0) {
                     markInteracted();
                 } else {
-                    // 全て消去されたら「未操作」状態に戻し UI をクリア
+                    // 全て消去されたら「未操作」状態に戻しUIをクリア
                     if (this.interactedFields.has(fieldName)) {
                         this.interactedFields.delete(fieldName);
                     }
                     this.clearFieldValidationUI(inputElement);
                 }
             });
+
+            // pasteイベント：貼り付けされたタイミング
             inputElement.addEventListener('paste', () => {
                 setTimeout(() => {
                     if (inputElement.value.length > 0) {
@@ -158,13 +163,23 @@ class ReadingDeclarationApp {
                     }
                 }, 0);
             });
-            inputElement.addEventListener('blur', () => {
-                // フィールドを離れる時点で内容が入っていればインタラクション扱い
+
+            // blurイベント：フィールドからフォーカスが離れたタイミング
+            inputElement.addEventListener('blur', (e) => {
+                // タスクリストのボタンがクリックされた場合はバリデーションを実行しない
+                const relatedTarget = e.relatedTarget;
+                if (relatedTarget && 
+                    (relatedTarget.hasAttribute('data-action') || 
+                     relatedTarget.closest('[data-action]'))) {
+                    return;
+                }
+
+                // フィールドに内容があり、ユーザーが操作済みの場合のみUI更新
                 if (inputElement.value.trim().length > 0) {
                     markInteracted();
-                    // 既に検証済み結果があればUI反映（ユーザー入力があったケース）
+                    // 既に検証済み結果があればUI反映
                     const result = this.validationState[fieldName];
-                    if (result) {
+                    if (result && this.interactedFields.has(fieldName)) {
                         this.inputValidator.updateFieldUI(inputElement, result);
                     }
                 }
@@ -347,6 +362,9 @@ class ReadingDeclarationApp {
             bookTitle: { isValid: false, errors: [] },
             author: { isValid: true, errors: [] }
         };
+        
+        // インタラクション状態もリセット
+        this.interactedFields.clear();
         
         // 文字カウンターをリセット
         this.updateCharacterCounter('bookTitle');
@@ -632,9 +650,10 @@ class ReadingDeclarationApp {
      */
     manageFocusAfterTaskUpdate() {
         // 最初のアクティブなタスクまたは書籍タイトル入力フィールドにフォーカス
-        const firstActiveTask = document.querySelector('.task-item:not(.completed)');
-        if (firstActiveTask) {
-            firstActiveTask.focus();
+        const firstActiveTaskButton = document.querySelector('.task-item:not(.completed) .btn[data-action]');
+        if (firstActiveTaskButton) {
+            // アクティブなタスクの最初のボタンにフォーカス
+            firstActiveTaskButton.focus();
         } else {
             // アクティブなタスクがない場合は入力フィールドにフォーカス
             if (this.elements.bookTitleInput) {
